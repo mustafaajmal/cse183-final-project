@@ -30,4 +30,3 @@ app.load_data = function () {
 }
 
 app.load_data();
-

@@ -34,10 +34,31 @@ from .models import get_user_email
 url_signer = URLSigner(session)
 
 @action('index')
-@action.uses('index.html', db, auth, url_signer)
+@action.uses('index.html', db, auth.user, url_signer)
 def index():
     return dict(
         # COMPLETE: return here any signed URLs you need.
+        my_callback_url = URL('my_callback', signer=url_signer),
+    )
+
+@action('checklist')
+@action.uses('checklist.html', db, auth.user, url_signer)
+def checklist():
+    return dict(
+        my_callback_url = URL('my_callback', signer=url_signer),
+    )
+
+@action('location')
+@action.uses('location.html', db, auth.user, url_signer)
+def location():
+    return dict(
+        my_callback_url = URL('my_callback', signer=url_signer),
+    )
+
+@action('user_statistics')
+@action.uses('user_statistics.html', db, auth.user, url_signer)
+def user_statistics():
+    return dict(
         my_callback_url = URL('my_callback', signer=url_signer),
     )
 

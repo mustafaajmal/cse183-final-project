@@ -7,6 +7,10 @@
     <link rel="shortcut icon" href="data:image/x-icon;base64,AAABAAEAAQEAAAEAIAAwAAAAFgAAACgAAAABAAAAAgAAAAEAIAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAPAAAAAA=="/>
     <link rel="stylesheet" href="css/bulma.css">
     <link rel="stylesheet" href="font-awesome-4.7.0/css/font-awesome.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+
     <!-- <link rel="stylesheet" href="fontawesome-free-6.5.1-web/css/fontawesome.css">
     <link rel="stylesheet" href="fontawesome-free-6.5.1-web/css/brands.css">
     <link rel="stylesheet" href="fontawesome-free-6.5.1-web/css/solid.css"> -->
@@ -17,7 +21,7 @@
     <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
       <div class="navbar-brand">
         <a class="navbar-item" href="[[=URL('index')]]">
-          Learn py4web
+          Home
           <!-- <img class="logo" width="150" src="images/site_icon.png"> -->
         </a>
 
@@ -75,5 +79,8 @@
   <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.min.js"></script> -->
   <script src="js/vue3.js"></script> 
   <script src="js/utils.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""></script>
   [[block page_scripts]]<!-- individual pages can add scripts here -->[[end]]
 </html>
