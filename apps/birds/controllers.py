@@ -76,7 +76,8 @@ def my_callback():
         with open('sightings.csv', 'r') as f:
             reader = csv.reader(f)
             for row in reader:
-                sightings = db.sightings.insert(name=row[0])
+                sightings = db.sightings.insert(name=row[0],
+                                                bird_count=row[1])
     if db(db.checklist).isempty():
         with open('checklist.csv', 'r') as f:
             reader = csv.reader(f)
