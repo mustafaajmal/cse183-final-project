@@ -30,6 +30,7 @@ from yatl.helpers import A
 from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash
 from py4web.utils.url_signer import URLSigner
 from .models import get_user_email
+import csv
 
 url_signer = URLSigner(session)
 
@@ -66,4 +67,20 @@ def user_statistics():
 @action.uses() # Add here things like db, auth, etc.
 def my_callback():
     # The return value should be a dictionary that will be sent as JSON.
-    return dict(my_value=3)
+    if db(db.species).isempty():
+        with open('species.csv', 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                species = db.species.insert(name=row[0])
+    if db(db.sightings).isempty():
+        with open('sightings.csv', 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                sightings = db.sightings.insert(name=row[0])
+    if db(db.checklist).isempty():
+        with open('checklist.csv', 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                checklist = db.sightings.insert(name=row[0])
+
+    return dict(my_value=3, species = species, sightings = sightings, checklist = checklist)

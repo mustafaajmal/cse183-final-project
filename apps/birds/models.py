@@ -20,11 +20,25 @@ def get_time():
 #
 ## always commit your models to avoid problems later
 db.define_table(
-    'birds',
+    'species',
+    Field('bird_species', 'string'),
+)
+
+db.define_table(
+    'sightings',
     Field('bird_species', 'string'),
     Field('bird_count', 'integer', default=0),
     Field('user_email', default=get_user_email),
-    Field('modified_on', 'datetime', update=get_time),
 )
+
+db.define_table(
+    'checklist',
+    Field('latitude', 'integer', default=0),
+    Field('longitude', 'integer', default=0),
+    Field('modified_on', 'datetime', update=get_time),
+    Field('user_email', default=get_user_email),
+    Field('duration_minute', 'integer', default=0),
+)
+
 
 db.commit()
