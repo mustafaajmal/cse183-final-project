@@ -5,6 +5,8 @@ This file defines the database models
 import datetime
 from .common import db, Field, auth
 from pydal.validators import *
+import os
+
 
 
 def get_user_email():
@@ -21,24 +23,39 @@ def get_time():
 ## always commit your models to avoid problems later
 db.define_table(
     'species',
-    Field('bird_species', 'string'),
+    Field('COMMON_NAME', 'string')
 )
 
 db.define_table(
     'sightings',
-    Field('bird_species', 'string'),
-    Field('bird_count', 'integer', default=0),
-    Field('user_email', default=get_user_email),
+    Field('SAMPLING_EVENT_IDENTIFIER', 'string'),
+    Field('COMMON_NAME', 'string'),
+    Field('OBSERVATION_COUNT', 'string')
 )
 
 db.define_table(
     'checklist',
-    Field('latitude', 'integer', default=0),
-    Field('longitude', 'integer', default=0),
-    Field('modified_on', 'datetime', update=get_time),
-    Field('user_email', default=get_user_email),
-    Field('duration_minute', 'integer', default=0),
+    Field('SAMPLING_EVENT_IDENTIFIER', 'string'),
+    Field('LATITUDE', 'double'),
+    Field('LONGITUDE', 'double'),
+    Field('OBSERVATION_DATE', 'date'),
+    Field('TIME_OBSERVATIONS_STARTED', 'time'),
+    Field('OBSERVER_ID', 'string'),
+    Field('DURATION_MINUTES', 'double')
 )
+
+if db(db.species).isempty():
+    with open(os.path.join(os.getcwd(), r'apps\birds\uploads\species.csv'), 'r') as dumpfile:
+        db.species.import_from_csv_file(dumpfile)
+        db.commit()
+if db(db.sightings).isempty():
+    with open(os.path.join(os.getcwd(), r'apps\birds\uploads\sightings.csv'), 'r') as dumpfile:
+        db.sightings.import_from_csv_file(dumpfile)
+        db.commit()
+if db(db.checklist).isempty():
+    with open(os.path.join(os.getcwd(), r'apps\birds\uploads\checklists.csv'), 'r') as dumpfile:
+        db.checklist.import_from_csv_file(dumpfile)
+        db.commit()
 
 
 db.commit()

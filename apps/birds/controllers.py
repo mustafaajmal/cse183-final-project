@@ -67,6 +67,8 @@ def user_statistics():
 @action.uses() # Add here things like db, auth, etc.
 def my_callback():
     # The return value should be a dictionary that will be sent as JSON.
+
+    '''
     if db(db.species).isempty():
         with open('species.csv', 'r') as f:
             reader = csv.reader(f)
@@ -85,3 +87,4 @@ def my_callback():
                 checklist = db.sightings.insert(name=row[0])
 
     return dict(my_value=3, species = species, sightings = sightings, checklist = checklist)
+    '''
