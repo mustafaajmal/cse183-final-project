@@ -29,6 +29,7 @@ from py4web import action, request, abort, redirect, URL
 from yatl.helpers import A
 from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash
 from py4web.utils.url_signer import URLSigner
+from py4web.utils.grid import Grid, GridClassStyleBulma
 from .models import get_user_email
 import csv
 
@@ -40,6 +41,7 @@ def index():
     return dict(
         # COMPLETE: return here any signed URLs you need.
         my_callback_url = URL('my_callback', signer=url_signer),
+        get_user_statistics_url = URL('get_user_statistics')
     )
 
 @action('checklist')
@@ -60,8 +62,17 @@ def location():
 @action.uses('user_statistics.html', db, auth.user, url_signer)
 def user_statistics():
     return dict(
-        my_callback_url = URL('my_callback', signer=url_signer),
+        load_user_statistics_url = URL('load_user_statistics')
     )
+    
+@action('load_user_statistics')
+@action.uses(db, auth.user, url_signer)
+def get_user_statistics():
+    query = (db.sightings.OBSERVATION_COUNT.regexp('^[0-9]+$')) & (db.sightings.OBSERVATION_COUNT.cast('integer') > 0)
+
+    common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
+    print("common names", common_names)
+    return dict(common_names = common_names)
 
 @action('my_callback')
 @action.uses() # Add here things like db, auth, etc.
@@ -88,3 +99,4 @@ def my_callback():
 
     return dict(my_value=3, species = species, sightings = sightings, checklist = checklist)
     '''
+

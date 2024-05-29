@@ -30,7 +30,7 @@ db.define_table(
     'sightings',
     Field('SAMPLING_EVENT_IDENTIFIER', 'string'),
     Field('COMMON_NAME', 'string'),
-    Field('OBSERVATION_COUNT', 'string')
+    Field('OBSERVATION_COUNT', 'integer')
 )
 
 db.define_table(
@@ -45,15 +45,15 @@ db.define_table(
 )
 
 if db(db.species).isempty():
-    with open(os.path.join(os.getcwd(), r'apps\birds\uploads\species.csv'), 'r') as dumpfile:
+    with open(os.path.join(os.getcwd(), r'apps/birds/uploads/species.csv'), 'r') as dumpfile:
         db.species.import_from_csv_file(dumpfile)
         db.commit()
 if db(db.sightings).isempty():
-    with open(os.path.join(os.getcwd(), r'apps\birds\uploads\sightings.csv'), 'r') as dumpfile:
+    with open(os.path.join(os.getcwd(), r'apps/birds/uploads/sightings.csv'), 'r') as dumpfile:
         db.sightings.import_from_csv_file(dumpfile)
         db.commit()
 if db(db.checklist).isempty():
-    with open(os.path.join(os.getcwd(), r'apps\birds\uploads\checklists.csv'), 'r') as dumpfile:
+    with open(os.path.join(os.getcwd(), r'apps/birds/uploads/checklists.csv'), 'r') as dumpfile:
         db.checklist.import_from_csv_file(dumpfile)
         db.commit()
 
