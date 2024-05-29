@@ -30,7 +30,7 @@ db.define_table(
     'sightings',
     Field('SAMPLING_EVENT_IDENTIFIER', 'string'),
     Field('COMMON_NAME', 'string'),
-    Field('OBSERVATION_COUNT', 'integer')
+    Field('OBSERVATION_COUNT', 'string')
 )
 
 db.define_table(
