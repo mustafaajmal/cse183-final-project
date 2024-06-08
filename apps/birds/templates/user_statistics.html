@@ -11,11 +11,17 @@
   <!-- Put here your Vue.js template -->
   <h1 class="title"><i class="fa-solid fa-cube"></i> User Statistics Page</h1>
   <p>Content: my_value: {{my_value}} </p>
-  <input type="text" v-model="searchQuery" placeholder="Search common names">
+  <input class="input" type="text" v-model="query" @keyup="search" placeholder="Search common names">
   <!-- now figure out how to make it so when i tap on a bird it shows me the date it was seen, and if no one liked, and where with a map -->
   <ul>
-    <li v-for="name in common_names">
+    <li v-for="name in common_names" @click="fetchObservationDates(name)">
       {{ name.COMMON_NAME }}
+      <ul>
+        <li v-for="date in name.observation_dates">
+          <!--will contain visualization of when seen and map if where seen-->
+          {{date.OBSERVATION_DATE}}
+        </li> 
+      </ul>
     </li>
   </ul>
 </div>
@@ -25,6 +31,8 @@
 <!-- Loads the index-specific js for Vue -->
 <script>
   let load_user_statistics_url = "[[=XML(load_user_statistics_url)]]";
+  let search_url = "[[=XML(search_url)]]";
+  let observation_dates_url = "[[=XML(observation_dates_url)]]"; 
 </script>
 <script src="js/index.js"></script>
 [[end]]
