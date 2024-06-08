@@ -57,9 +57,10 @@
                 </div>
               </div>
             </div>
-            <div class="field">
+            <div class="buttons">
               <div class="control">
-                <button id="stats-btn" class="button is-primary">Statistics on Region</button>
+                <!-- Make sure this is disabled until a region is selected on the map -->
+                <a href="[[=URL('location')]]" class="button is-primary">Region Information</a>
               </div>
             </div>
           </div>
@@ -82,5 +83,7 @@
 <script>
   let my_callback_url = "[[=XML(my_callback_url)]]";
 </script>
+<script src="js/leaflet-heat.js"></script>
+<script src="js/convex-hull.js"></script>
 <script src="js/map.js"></script>
 [[end]]
