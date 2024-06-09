@@ -1,38 +1,122 @@
 [[extend 'layout.html']]
 
 <style>
-[v-cloak] {
-     display: none;
-}
+  [v-cloak] {
+    display: none;
+  }
+
+  .box-container {
+    display: inline-block;
+    vertical-align: top;
+  }
+
+  .box {
+    max-width: 100%; /* Allow boxes to shrink to content width */
+  }
+
+  @media screen and (max-width: 1000px) {
+    .column.is-3 {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+  
+  #map {
+    width: 35%;
+  }
+  
+  ul {
+    list-style-type: disc; /* Show bullet points */
+    margin-left: 20px; /* Indent the list */
+  }
+
+  ul ul {
+    list-style-type: circle; /* Show different bullet points for nested lists */
+    margin-left: 20px; /* Indent the nested list */
+  }
+
+  ul li {
+    margin-bottom: 5px; /* Add some spacing between list items */
+  }
 </style>
 
+<head>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""/>
+</head>
 
 <div class="section" id="app" v-cloak>
-  <!-- Put here your Vue.js template -->
   <h1 class="title"><i class="fa-solid fa-cube"></i> User Statistics Page</h1>
-  <p>Content: my_value: {{my_value}} </p>
-  <input class="input" type="text" v-model="query" @keyup="search" placeholder="Search common names">
-  <!-- now figure out how to make it so when i tap on a bird it shows me the date it was seen, and if no one liked, and where with a map -->
-  <ul>
-    <li v-for="name in common_names" @click="fetchObservationDates(name)">
-      {{ name.COMMON_NAME }}
+  <p>The user statistics pages allows the user to search birds and either search by recent or first sightings. Clicking on the species will direct you to dates found. Clicking on those dates will direct the map to the location of where it was found recently. </p>
+  <div class="field is-grouped">
+    <div class="control is-three-quarters">
+      <input class="input" type="text" v-model="query" placeholder="Search common names">
+    </div>
+    <div class="field">
+      <div class="control">
+        <div class="select">
+          <select id="statistics-options" @change="updateSearchOption">
+            <option value="option1">Recently seen</option>
+            <option value="option2">First seen</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="control">
+      <button class="button is-primary" @click="search">Search</button>
+    </div>
+  </div>
+  <div id="map" style="height: 300px"></div>
+  <div class="columns is-multiline">
+    <div class="column is-one-third" v-for="(name, index) in common_names" :key="name.COMMON_NAME">
       <ul>
-        <li v-for="date in name.observation_dates">
-          <!--will contain visualization of when seen and map if where seen-->
-          {{date.OBSERVATION_DATE}}
-        </li> 
+        <li @click="fetchObservationDates(name)">
+          {{ name.COMMON_NAME }}
+          <ul>
+            <li v-for="date in name.observation_dates" :key="date.OBSERVATION_DATE" @click="moveMapToObservation(name, date)">
+              {{ date.OBSERVATION_DATE }}
+            </li>
+          </ul>
+        </li>
       </ul>
-    </li>
-  </ul>
+    </div>
+  </div>
 </div>
 
-
 [[block page_scripts]]
-<!-- Loads the index-specific js for Vue -->
 <script>
   let load_user_statistics_url = "[[=XML(load_user_statistics_url)]]";
   let search_url = "[[=XML(search_url)]]";
   let observation_dates_url = "[[=XML(observation_dates_url)]]"; 
 </script>
-<script src="js/index.js"></script>
+<script src="js/statistics.js"></script>
+<script src="js/leaflet-heat.js"></script>
+<script src="js/convex-hull.js"></script>
+<script src="js/map.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const map = L.map('map').setView([37.06096445677006, -84.63335595604734], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const userLocation = [position.coords.latitude, position.coords.longitude];
+        map.setView(userLocation, 13);
+        L.marker(userLocation).addTo(map)
+          .bindPopup('You are here')
+          .openPopup();
+      });
+    }
+
+    window.map = map; // Make map accessible globally
+  });
+</script>
 [[end]]
