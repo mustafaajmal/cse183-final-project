@@ -2,7 +2,7 @@
 
 <style>
 [v-cloak] {
-     display: none;
+    display: none;
 }
 </style>
 
@@ -11,6 +11,20 @@
   <!-- Put here your Vue.js template -->
   <h1 class="title"><i class="fa-solid fa-cube"></i> User Statistics Page</h1>
   <p>Content: my_value: {{my_value}} </p>
+  <input class="input" type="text" v-model="query" placeholder="Search common names">
+  <button @click="search">Search</button>
+  <!-- now figure out how to make it so when i tap on a bird it shows me the date it was seen, and if no one liked, and where with a map -->
+  <ul>
+    <li v-for="name in common_names" @click="fetchObservationDates(name)">
+      {{ name.COMMON_NAME }}
+      <ul>
+        <li v-for="date in name.observation_dates">
+          <!--will contain visualization of when seen and map if where seen-->
+          {{date.OBSERVATION_DATE}}
+        </li> 
+      </ul>
+    </li>
+  </ul>
 </div>
 
 
