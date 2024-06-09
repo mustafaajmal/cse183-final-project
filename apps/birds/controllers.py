@@ -25,7 +25,6 @@ session, db, T, auth, and tempates are examples of Fixtures.
 Warning: Fixtures MUST be declared with @action.uses({fixtures}) else your app will result in undefined behavior
 """
 
-import json
 from py4web import action, request, abort, redirect, URL
 from yatl.helpers import A
 from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash
@@ -35,7 +34,6 @@ from .models import get_user_email
 import csv
 
 url_signer = URLSigner(session)
-drawn_coordinates = []
 
 @action('index')
 @action.uses('index.html', db, auth.user, url_signer)
@@ -45,89 +43,20 @@ def index():
         my_callback_url = URL('my_callback', signer=url_signer),
         get_user_statistics_url = URL('get_user_statistics'),
         search_url = URL('search'),
-        get_bird_sightings_url = URL('get_bird_sightings'),
-        save_coords_url = URL('save_coords'),
     )
 
-@action('get_bird_sightings', method=['POST'])
-@action.uses(db, auth.user, url_signer)
-def get_bird_sightings():
-    north = request.json.get('north')
-    south = request.json.get('south')
-    east = request.json.get('east')
-    west = request.json.get('west')
-
-    events_in_bounds = db(
-        (db.checklist.LATITUDE <= north) & 
-        (db.checklist.LATITUDE >= south) &
-        (db.checklist.LONGITUDE <= east) &
-        (db.checklist.LONGITUDE >= west)
-    ).select(db.checklist.SAMPLING_EVENT_IDENTIFIER)
-
-    # print("Events In Bounds: ", events_in_bounds[0])
-
-    event_ids = [event.SAMPLING_EVENT_IDENTIFIER for event in events_in_bounds]
-
-    # print("Event Ids: ", event_ids[0])
-
-    sightings = db(db.sightings.SAMPLING_EVENT_IDENTIFIER.belongs(event_ids)).select()
-
-    # print("Sightings: ", sightings[0])
-
-    sightings_list = []
-
-    for sighting in sightings:
-        event_location = db(db.checklist.SAMPLING_EVENT_IDENTIFIER == sighting.SAMPLING_EVENT_IDENTIFIER).select().first()
-        if event_location:
-            try:
-                intensity = int(sighting.OBSERVATION_COUNT)
-            except ValueError:
-                intensity = 0
-            sightings_list.append({
-                'species': sighting.COMMON_NAME,
-                'lat': event_location.LATITUDE,
-                'lon': event_location.LONGITUDE,
-                'intensity': intensity # Check parsing errors if OBSERVATION_COUNT == 'X'
-            })
-
-    # print("Sightings List: ", sightings_list[0:2])
-    print("Loading Map...")
-    return dict(sightings=sightings_list)
-
-@action('save_coords', method='POST')
-@action.uses(db, auth.user, url_signer, session)
-def save_coords():
-    data = request.json
-    session['drawn_coordinates'] = data.get('drawing_coords')
-    print("Session Drawn Coordinates", session['drawn_coordinates'])
-    return 'Coordinates saved successfully.'
-
 @action('checklist')
-@action.uses('checklist.html', db, auth.user, url_signer, session)
+@action.uses('checklist.html', db, auth.user, url_signer)
 def checklist():
-    drawn_coordinates = session.get('drawn_coordinates', [])
-    print("Checklist Call - Drawn Coordinates: ", drawn_coordinates)
     return dict(
         my_callback_url = URL('my_callback', signer=url_signer),
-
-        # Richard's Note:
-        # These are the coordinates for the region that the user selects on the map
-        # They are of format: [{lat: 0.0, lng: 0.0}, {lat: 0.0, lng: 0.0}, ..., etc.]
-        drawn_coordinates = json.dumps(drawn_coordinates),
     )
 
 @action('location')
-@action.uses('location.html', db, auth.user, url_signer, session)
+@action.uses('location.html', db, auth.user, url_signer)
 def location():
-    drawn_coordinates = session.get('drawn_coordinates', [])
-    print("Location Call - Drawn Coordinates: ", type(drawn_coordinates))
     return dict(
         my_callback_url = URL('my_callback', signer=url_signer),
-
-        # Richard's Note:
-        # These are the coordinates for the region that the user selects on the map
-        # They are of format: [{lat: 0.0, lng: 0.0}, {lat: 0.0, lng: 0.0}, ..., etc.]
-        drawn_coordinates = json.dumps(drawn_coordinates),
     )
 
 @action('user_statistics')
@@ -143,58 +72,71 @@ def user_statistics():
 @action.uses(db, auth.user, url_signer)
 def get_user_statistics():
     query = (db.sightings.OBSERVATION_COUNT.regexp('^[0-9]+$')) & (db.sightings.OBSERVATION_COUNT.cast('integer') > 0)
-
     common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
     print("user statistics contains all birds")
-    return dict(common_names = common_names)
+    return dict(common_names=common_names)
 
 @action('search', method=["POST"])
 @action('search')
 @action.uses(db, auth.user, url_signer)
 def search():
-    data = request.json  # Get the JSON payload
-    q = data.get("params", {}).get("q")  # Extract 'q' from 'params'
+    data = request.json
+    q = data.get("params", {}).get("q")
     option = data.get("params", {}).get("option")
     print("query", q)
     print("option", option)
-    if not q:
-        common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
-        print("user statistics contains all birds")
-        return dict(common_names = common_names)
-    
     query = (db.sightings.OBSERVATION_COUNT.regexp('^[0-9]+$')) & (db.sightings.OBSERVATION_COUNT.cast('integer') > 0)
-    
     if q:
         query &= (db.sightings.COMMON_NAME.contains(q))
-    
     if option == "recent":
-        print("recent")
         query &= (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.checklist.SAMPLING_EVENT_IDENTIFIER)
         common_names = db(query).select(db.sightings.COMMON_NAME, orderby=~db.checklist.OBSERVATION_DATE, distinct=True).as_list()
     elif option == "old":
-        print("old")
         query &= (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.checklist.SAMPLING_EVENT_IDENTIFIER)
         common_names = db(query).select(db.sightings.COMMON_NAME, orderby=db.checklist.OBSERVATION_DATE, distinct=True).as_list()
     else:
         common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
-    print("searched by query" , q)
+    print("searched by query", q)
     return dict(common_names=common_names)
-    
-@action('observation_dates', method=["POST"]) 
+
+@action('observation_dates', method=["POST"])
 @action('observation_dates')
 @action.uses(db, auth.user, url_signer)
 def observation_date():
     data = request.json
     common_name = data.get("common_name")
-    print("retrieving observation dates by ", common_name)
+    observation_date = data.get("observation_date")
     if not common_name:
-        print("ERROR: common_name not found")
-        return dict(observation_dates=[])
-    print("observation_dates for : ", common_name)
+        return dict(observation_dates=[], most_recent_sighting=None)
+    
     query = (db.sightings.COMMON_NAME == common_name) & \
             (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.checklist.SAMPLING_EVENT_IDENTIFIER)
+    
+    if observation_date:
+        query &= (db.checklist.OBSERVATION_DATE == observation_date)
+        most_recent_sighting = db(query).select(
+            db.checklist.LATITUDE, 
+            db.checklist.LONGITUDE, 
+            orderby=~db.checklist.OBSERVATION_DATE, 
+            limitby=(0, 1)
+        ).first()
+    else:
+        most_recent_sighting = db(query).select(
+            db.checklist.LATITUDE, 
+            db.checklist.LONGITUDE, 
+            orderby=~db.checklist.OBSERVATION_DATE, 
+            limitby=(0, 1)
+        ).first()
+
+    if most_recent_sighting:
+        most_recent_sighting = dict(
+            LATITUDE=most_recent_sighting.LATITUDE,
+            LONGITUDE=most_recent_sighting.LONGITUDE
+        )
+
     observation_dates = db(query).select(db.checklist.OBSERVATION_DATE, distinct=True).as_list()
-    return dict(observation_dates=observation_dates)
+
+    return dict(observation_dates=observation_dates, most_recent_sighting=most_recent_sighting)
 
 @action('my_callback')
 @action.uses() # Add here things like db, auth, etc.
