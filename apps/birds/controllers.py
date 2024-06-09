@@ -61,17 +61,15 @@ def get_bird_sightings():
         (db.checklist.LONGITUDE >= west)
     ).select(db.checklist.SAMPLING_EVENT_IDENTIFIER)
 
-    print("Events In Bounds: ", events_in_bounds[0])
+    # print("Events In Bounds: ", events_in_bounds[0])
 
     event_ids = [event.SAMPLING_EVENT_IDENTIFIER for event in events_in_bounds]
 
-    print("Event Ids: ", event_ids[0])
+    # print("Event Ids: ", event_ids[0])
 
     sightings = db(db.sightings.SAMPLING_EVENT_IDENTIFIER.belongs(event_ids)).select()
 
-    print("Sightings: ", sightings[0])
-
-
+    # print("Sightings: ", sightings[0])
 
     sightings_list = []
 
@@ -89,7 +87,8 @@ def get_bird_sightings():
                 'intensity': intensity # Check parsing errors if OBSERVATION_COUNT == 'X'
             })
 
-    print("Sightings List: ", sightings_list[0:2])
+    # print("Sightings List: ", sightings_list[0:2])
+    print("Loading Map...")
     return dict(sightings=sightings_list)
 
 @action('checklist')

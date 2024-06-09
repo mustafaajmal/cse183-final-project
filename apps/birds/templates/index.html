@@ -43,6 +43,12 @@
         </div>
         <div class="column is-3">
             <div class="box-container">
+              <div class="box">
+                <label class="label">User Options</label>
+                <div class="control">
+                    <a href="[[=URL('user_statistics')]]" class="button is-info">My Birding</a>
+                </div>
+              </div>
                 <div class="box">
                     <label class="label">Map Options</label>
                     <div class="field">
@@ -52,37 +58,35 @@
                         </div>
                     </div>
                     <div class="field">
-                        <div class="control">
-                            <button id="clear-map" class="button is-primary is-danger" @click="clearPolygon">Clear Map</button>
-                        </div>
+                      <div class="control">
+                        <a href="[[=URL('location')]]" class="button is-primary">Region/Location Information</a>
+                      </div>
                     </div>
+                    <div class="field">
+                      <div class="control">
+                        <a href="[[=URL('checklist')]]" class="button is-link">Enter Checklist</a>
+                      </div>
+                    </div>
+                    <div class="field">
+                      <div class="control">
+                          <button id="clear-map" class="button is-primary is-danger" @click="clearPolygon">Clear Map</button>
+                      </div>
+                  </div>
                 </div>
                 <div class="box">
-                    <label class="label">Map Filters:</label>
+                    <label class="label">Map Filter</label>
                     <div class="field">
-                        <label class="description">Filter by Species</label>
+                        <label class="description">Filter by Species: </label>
+                        <p class="description">(Dropdown only shows species within current map bounds.)</p>
                         <div class="control mt-2">
                             <div class="select">
-                                <select id="species">
-                                    <option v-for="species in species_in_bounds" :key="species" :value="species">
+                                <select id="species" v-model="selectedSpecies" @change="loadHeatMap">
+                                    <option v-for="species in filteredSpeciesList" :key="species" :value="species">
                                         {{ species }}
                                     </option>
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    <div class="buttons">
-                        <div class="control">
-                            <a href="[[=URL('location')]]" class="button is-primary">Region Information</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="box buttons">
-                    <label class="label">More Options:</label>
-                    <div class="control">
-                        <a href="[[=URL('checklist')]]" class="button is-link">Enter Checklist</a>
-                        <a href="[[=URL('user_statistics')]]" class="button is-info">My Birding</a>
                     </div>
                 </div>
             </div>

@@ -16,6 +16,8 @@ app.data = {
 
             events_in_bounds: [],
             species_in_bounds: [],
+            selectedSpecies: '',
+            defaultDropdown: '',
 
             drawing_coords: [],
             points: [],
@@ -37,11 +39,8 @@ app.data = {
 
         setPosition: function(position) {
             this.user_location = [position.coords.latitude, position.coords.longitude];
-            L.marker(this.user_location).addTo(toRaw(this.map))
-                .bindPopup("Current Location")
-                .openPopup();
             this.map.setView(this.user_location, 13);
-            this.map.once('moveend', this.loadHeatMap);
+            this.map.on('moveend', this.loadHeatMap);
         },
 
         showLocationError: function(error) {
@@ -70,7 +69,6 @@ app.data = {
             this.drawing_coords.push(e.latlng);
             console.log(this.drawing_coords);
             this.drawPoint(e.latlng);
-            
         },
 
         drawPoint: function(e) {
@@ -105,7 +103,7 @@ app.data = {
         loadHeatMap: function() {
 
             // First, get all events that are inside of the box
-            console.log("Loading")
+            console.log("Loading Heatmap")
             let bounds = this.map.getBounds();
             this.map_bounds = {
                 north: bounds.getNorth(),
@@ -113,6 +111,10 @@ app.data = {
                 east: bounds.getEast(),
                 west: bounds.getWest()
             };
+
+            let speciesFilter = this.selectedSpecies === this.defaultDropdown ? '' : this.selectedSpecies;
+
+            console.log("Species Filter: ", speciesFilter);
             
             axios.post(get_bird_sightings_url, this.map_bounds)
                 .then(response => {
@@ -120,14 +122,35 @@ app.data = {
                     // console.log("Response received:", response.data);
                     this.species_in_bounds = [...new Set(this.events_in_bounds.map(event => event.species))];
                     this.species_in_bounds.sort((a, b) => a.localeCompare(b));
-                    console.log("Species in Bounds: ", this.species_in_bounds[0]);
+                    this.defaultDropdown = 'All Species ' + "(" + this.species_in_bounds.length + ")"
+                    this.species_in_bounds.unshift(this.defaultDropdown);
 
+                    let filterActive = false;
+
+                    if (speciesFilter != ''){
+                        // Then it is an actual filter
+                        if (!this.species_in_bounds.includes(speciesFilter)){
+                            this.selectedSpecies = this.defaultDropdown;
+                            filterActive = false;
+                        } else {
+                            this.selectedSpecies = speciesFilter;
+                            filterActive = true;
+                        }
+                    } else {
+                        this.selectedSpecies = this.defaultDropdown;
+                        filterActive = false;
+                    }
 
                     if (this.heatmapLayer) {
                         this.map.removeLayer(this.heatmapLayer);
                     }
+                    let filteredSightings = this.events_in_bounds;
 
-                    let heatmapData = this.events_in_bounds.map(sighting => [
+                    if (filterActive){
+                        filteredSightings = this.events_in_bounds.filter(sighting => sighting.species === this.selectedSpecies);
+                    }
+
+                    let heatmapData = filteredSightings.map(sighting => [
                         sighting.lat, sighting.lon, sighting.intensity
                     ]);
 
@@ -135,11 +158,19 @@ app.data = {
                         radius: 25,
                         maxOpacity: 1
                     }).addTo(toRaw(this.map));
+
+                    console.log("Successfully Loaded Heatmap")
                 })
                 .catch(error => console.error('Error fetching bird sightings', error));
             // this.map('moveend', this.loadHeatMap());
         },
 
+    },
+
+    computed: {
+        filteredSpeciesList: function() {
+            return this.species_in_bounds;
+        }
     },
 
     mounted() {
@@ -152,6 +183,7 @@ app.data = {
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
+        
         map.on('click', this.mapClickListener);
         map.on('dblclick', this.mapDblClickListener);
         map.on('moveend', function() {
