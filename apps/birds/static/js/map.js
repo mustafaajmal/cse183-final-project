@@ -85,6 +85,14 @@ app.data = {
 
             let polygon = L.polygon(convexHull).addTo(toRaw(this.map));
             this.polygons.push(polygon);
+
+            axios.post(save_coords_url, {drawing_coords: this.drawing_coords})
+                .then(response => {
+                    console.log('Coordinates saved successfully.');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
         },
 
         clearPolygon: function() {

@@ -25,6 +25,7 @@ session, db, T, auth, and tempates are examples of Fixtures.
 Warning: Fixtures MUST be declared with @action.uses({fixtures}) else your app will result in undefined behavior
 """
 
+import json
 from py4web import action, request, abort, redirect, URL
 from yatl.helpers import A
 from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash
@@ -34,6 +35,7 @@ from .models import get_user_email
 import csv
 
 url_signer = URLSigner(session)
+drawn_coordinates = []
 
 @action('index')
 @action.uses('index.html', db, auth.user, url_signer)
@@ -44,6 +46,7 @@ def index():
         get_user_statistics_url = URL('get_user_statistics'),
         search_url = URL('search'),
         get_bird_sightings_url = URL('get_bird_sightings'),
+        save_coords_url = URL('save_coords'),
     )
 
 @action('get_bird_sightings', method=['POST'])
@@ -91,18 +94,40 @@ def get_bird_sightings():
     print("Loading Map...")
     return dict(sightings=sightings_list)
 
+@action('save_coords', method='POST')
+@action.uses(db, auth.user, url_signer, session)
+def save_coords():
+    data = request.json
+    session['drawn_coordinates'] = data.get('drawing_coords')
+    print("Session Drawn Coordinates", session['drawn_coordinates'])
+    return 'Coordinates saved successfully.'
+
 @action('checklist')
-@action.uses('checklist.html', db, auth.user, url_signer)
+@action.uses('checklist.html', db, auth.user, url_signer, session)
 def checklist():
+    drawn_coordinates = session.get('drawn_coordinates', [])
+    print("Checklist Call - Drawn Coordinates: ", drawn_coordinates)
     return dict(
         my_callback_url = URL('my_callback', signer=url_signer),
+
+        # Richard's Note:
+        # These are the coordinates for the region that the user selects on the map
+        # They are of format: [{lat: 0.0, lng: 0.0}, {lat: 0.0, lng: 0.0}, ..., etc.]
+        drawn_coordinates = json.dumps(drawn_coordinates),
     )
 
 @action('location')
-@action.uses('location.html', db, auth.user, url_signer)
+@action.uses('location.html', db, auth.user, url_signer, session)
 def location():
+    drawn_coordinates = session.get('drawn_coordinates', [])
+    print("Location Call - Drawn Coordinates: ", type(drawn_coordinates))
     return dict(
         my_callback_url = URL('my_callback', signer=url_signer),
+
+        # Richard's Note:
+        # These are the coordinates for the region that the user selects on the map
+        # They are of format: [{lat: 0.0, lng: 0.0}, {lat: 0.0, lng: 0.0}, ..., etc.]
+        drawn_coordinates = json.dumps(drawn_coordinates),
     )
 
 @action('user_statistics')

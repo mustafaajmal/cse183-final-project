@@ -4,7 +4,6 @@
 // and be used to initialize it.
 let app = {};
 
-
 app.data = {    
     data: function() {
         return {
@@ -12,6 +11,7 @@ app.data = {
             my_value: 1, // This is an example.
             common_names: [], // This will hold the fetched common names.
             query: "",
+            drawn_coordinates: drawn_coordinates,
         };
     },
     methods: {
@@ -55,6 +55,7 @@ app.data = {
 app.vue = Vue.createApp(app.data).mount("#app");
 
 app.load_data = function () {
+    console.log(drawn_coordinates);
     axios.get(load_user_statistics_url).then(function (r) {
         console.log(r.status);
         app.vue.common_names = r.data.common_names;
