@@ -29,6 +29,7 @@ from py4web import action, request, abort, redirect, URL
 from yatl.helpers import A
 from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash
 from py4web.utils.url_signer import URLSigner
+from py4web.utils.grid import Grid, GridClassStyleBulma
 from .models import get_user_email
 import csv
 
@@ -40,6 +41,8 @@ def index():
     return dict(
         # COMPLETE: return here any signed URLs you need.
         my_callback_url = URL('my_callback', signer=url_signer),
+        get_user_statistics_url = URL('get_user_statistics'),
+        search_url = URL('search'),
     )
 
 @action('checklist')
@@ -60,7 +63,9 @@ def location():
 @action.uses('user_statistics.html', db, auth.user, url_signer)
 def user_statistics():
     return dict(
-        my_callback_url = URL('my_callback', signer=url_signer),
+        load_user_statistics_url = URL('load_user_statistics'),
+        search_url = URL('search'),
+        observation_dates_url = URL('observation_dates')
     )
     
 @action('load_user_statistics')
@@ -78,16 +83,29 @@ def get_user_statistics():
 def search():
     data = request.json  # Get the JSON payload
     q = data.get("params", {}).get("q")  # Extract 'q' from 'params'
+    option = data.get("params", {}).get("option")
     print("query", q)
+    print("option", option)
     if not q:
         common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
         print("user statistics contains all birds")
         return dict(common_names = common_names)
     
     query = (db.sightings.OBSERVATION_COUNT.regexp('^[0-9]+$')) & (db.sightings.OBSERVATION_COUNT.cast('integer') > 0)
-    query &= (db.sightings.COMMON_NAME.contains(q))
     
-    common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
+    if q:
+        query &= (db.sightings.COMMON_NAME.contains(q))
+    
+    if option == "recent":
+        print("recent")
+        query &= (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.checklist.SAMPLING_EVENT_IDENTIFIER)
+        common_names = db(query).select(db.sightings.COMMON_NAME, orderby=~db.checklist.OBSERVATION_DATE, distinct=True).as_list()
+    elif option == "old":
+        print("old")
+        query &= (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.checklist.SAMPLING_EVENT_IDENTIFIER)
+        common_names = db(query).select(db.sightings.COMMON_NAME, orderby=db.checklist.OBSERVATION_DATE, distinct=True).as_list()
+    else:
+        common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
     print("searched by query" , q)
     return dict(common_names=common_names)
     
@@ -105,8 +123,6 @@ def observation_date():
     query = (db.sightings.COMMON_NAME == common_name) & \
             (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.checklist.SAMPLING_EVENT_IDENTIFIER)
     observation_dates = db(query).select(db.checklist.OBSERVATION_DATE, distinct=True).as_list()
-    print("observation_dates: ")
-    print(observation_dates)
     return dict(observation_dates=observation_dates)
 
 @action('my_callback')
@@ -133,4 +149,6 @@ def my_callback():
                 checklist = db.sightings.insert(name=row[0])
 
     return dict(my_value=3, species = species, sightings = sightings, checklist = checklist)
+
     '''
+

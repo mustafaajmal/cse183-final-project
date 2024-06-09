@@ -1,37 +1,93 @@
 [[extend 'layout.html']]
 
 <style>
-[v-cloak] {
+  [v-cloak] {
     display: none;
-}
-</style>
+  }
+  
+  .box-container {
+    display: inline-block;
+    vertical-align: top;
+  }
 
+  .box {
+    max-width: 100%; /* Allow boxes to shrink to content width */
+  }
 
+  @media screen and (max-width: 1000px) {
+    .column.is-3 {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+
+  .map { height: 180px; }
+  
+  #map {
+    height: 600px;
+    width: 100%;
+  }
+  </style>
+
+<head>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""/>
+</head>
+<div id="map" style="height: 600px"></div>
 <div class="section" id="app" v-cloak>
   <!-- Put here your Vue.js template -->
   <h1 class="title"><i class="fa-solid fa-cube"></i> User Statistics Page</h1>
   <p>Content: my_value: {{my_value}} </p>
   <input class="input" type="text" v-model="query" placeholder="Search common names">
-  <button @click="search">Search</button>
+  <div class="field">
+    <label class="label">Search by:</label>
+    <div class="control">
+      <div class="select">
+        <select id="statistics-options" @change="updateSearchOption">
+          <option value="option1">Recently seen</option>
+          <option value="option2">First seen</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <button class="button is-primary" @click="search">Search</button>
   <!-- now figure out how to make it so when i tap on a bird it shows me the date it was seen, and if no one liked, and where with a map -->
   <ul>
-    <li v-for="name in common_names" @click="fetchObservationDates(name)">
+    <li v-for="name in common_names" :key="name.COMMON_NAME" @click="fetchObservationDates(name)">
       {{ name.COMMON_NAME }}
       <ul>
-        <li v-for="date in name.observation_dates">
-          <!--will contain visualization of when seen and map if where seen-->
-          {{date.OBSERVATION_DATE}}
-        </li> 
+        <li v-for="date in name.observation_dates" :key="date.OBSERVATION_DATE">
+          {{ date.OBSERVATION_DATE }}
+        </li>
       </ul>
     </li>
   </ul>
+  
 </div>
-
 
 [[block page_scripts]]
 <!-- Loads the index-specific js for Vue -->
 <script>
-  let my_callback_url = "[[=XML(my_callback_url)]]";
+  let load_user_statistics_url = "[[=XML(load_user_statistics_url)]]";
+  let search_url = "[[=XML(search_url)]]";
+  let observation_dates_url = "[[=XML(observation_dates_url)]]"; 
 </script>
 <script src="js/index.js"></script>
+<script src="js/leaflet-heat.js"></script>
+<script src="js/convex-hull.js"></script>
+<script src="js/map.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const map = L.map('map').setView([37.06096445677006,-84.63335595604734], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+  });
+</script>
 [[end]]

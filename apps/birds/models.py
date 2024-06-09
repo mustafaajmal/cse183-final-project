@@ -45,15 +45,15 @@ db.define_table(
 )
 
 if db(db.species).isempty():
-    with open(os.path.join(os.getcwd(), r'apps\birds\uploads\species.csv'), 'r') as dumpfile:
+    with open(os.path.join(os.getcwd(), r'apps/birds/uploads/species.csv'), 'r') as dumpfile:
         db.species.import_from_csv_file(dumpfile)
         db.commit()
 if db(db.sightings).isempty():
-    with open(os.path.join(os.getcwd(), r'apps\birds\uploads\sightings.csv'), 'r') as dumpfile:
+    with open(os.path.join(os.getcwd(), r'apps/birds/uploads/sightings.csv'), 'r') as dumpfile:
         db.sightings.import_from_csv_file(dumpfile)
         db.commit()
 if db(db.checklist).isempty():
-    with open(os.path.join(os.getcwd(), r'apps\birds\uploads\checklists.csv'), 'r') as dumpfile:
+    with open(os.path.join(os.getcwd(), r'apps/birds/uploads/checklists.csv'), 'r') as dumpfile:
         db.checklist.import_from_csv_file(dumpfile)
         db.commit()
 
