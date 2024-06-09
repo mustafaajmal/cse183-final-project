@@ -15,11 +15,14 @@ app.data = {
             user_location: null,
 
             events_in_bounds: [],
-
+            species_in_bounds: [],
 
             drawing_coords: [],
             points: [],
-            polygons: []
+            polygons: [],
+
+            heatmapLayer: null,
+            debounceTimer: null,
         };
     },
     methods: {
@@ -100,16 +103,42 @@ app.data = {
         },
 
         loadHeatMap: function() {
-            var heat = L.heatLayer([
-                [this.user_location[0], this.user_location[1], 1],
-            ], {radius: 25, maxOpacity: 1}).addTo(toRaw(this.map));
+
             // First, get all events that are inside of the box
+            console.log("Loading")
+            let bounds = this.map.getBounds();
+            this.map_bounds = {
+                north: bounds.getNorth(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                west: bounds.getWest()
+            };
             
-            // Then, loop through all events and record the sightings for each event
-            // Each sighting will be of format species + count
-            // Come up with a formula to denote intensity for a bird
-            
-        }
+            axios.post(get_bird_sightings_url, this.map_bounds)
+                .then(response => {
+                    this.events_in_bounds = response.data.sightings;
+                    // console.log("Response received:", response.data);
+                    this.species_in_bounds = [...new Set(this.events_in_bounds.map(event => event.species))];
+                    this.species_in_bounds.sort((a, b) => a.localeCompare(b));
+                    console.log("Species in Bounds: ", this.species_in_bounds[0]);
+
+
+                    if (this.heatmapLayer) {
+                        this.map.removeLayer(this.heatmapLayer);
+                    }
+
+                    let heatmapData = this.events_in_bounds.map(sighting => [
+                        sighting.lat, sighting.lon, sighting.intensity
+                    ]);
+
+                    this.heatmapLayer = L.heatLayer(heatmapData, {
+                        radius: 25,
+                        maxOpacity: 1
+                    }).addTo(toRaw(this.map));
+                })
+                .catch(error => console.error('Error fetching bird sightings', error));
+            // this.map('moveend', this.loadHeatMap());
+        },
 
     },
 

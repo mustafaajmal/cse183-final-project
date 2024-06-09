@@ -43,7 +43,54 @@ def index():
         my_callback_url = URL('my_callback', signer=url_signer),
         get_user_statistics_url = URL('get_user_statistics'),
         search_url = URL('search'),
+        get_bird_sightings_url = URL('get_bird_sightings'),
     )
+
+@action('get_bird_sightings', method=['POST'])
+@action.uses(db, auth.user, url_signer)
+def get_bird_sightings():
+    north = request.json.get('north')
+    south = request.json.get('south')
+    east = request.json.get('east')
+    west = request.json.get('west')
+
+    events_in_bounds = db(
+        (db.checklist.LATITUDE <= north) & 
+        (db.checklist.LATITUDE >= south) &
+        (db.checklist.LONGITUDE <= east) &
+        (db.checklist.LONGITUDE >= west)
+    ).select(db.checklist.SAMPLING_EVENT_IDENTIFIER)
+
+    print("Events In Bounds: ", events_in_bounds[0])
+
+    event_ids = [event.SAMPLING_EVENT_IDENTIFIER for event in events_in_bounds]
+
+    print("Event Ids: ", event_ids[0])
+
+    sightings = db(db.sightings.SAMPLING_EVENT_IDENTIFIER.belongs(event_ids)).select()
+
+    print("Sightings: ", sightings[0])
+
+
+
+    sightings_list = []
+
+    for sighting in sightings:
+        event_location = db(db.checklist.SAMPLING_EVENT_IDENTIFIER == sighting.SAMPLING_EVENT_IDENTIFIER).select().first()
+        if event_location:
+            try:
+                intensity = int(sighting.OBSERVATION_COUNT)
+            except ValueError:
+                intensity = 0
+            sightings_list.append({
+                'species': sighting.COMMON_NAME,
+                'lat': event_location.LATITUDE,
+                'lon': event_location.LONGITUDE,
+                'intensity': intensity # Check parsing errors if OBSERVATION_COUNT == 'X'
+            })
+
+    print("Sightings List: ", sightings_list[0:2])
+    return dict(sightings=sightings_list)
 
 @action('checklist')
 @action.uses('checklist.html', db, auth.user, url_signer)
