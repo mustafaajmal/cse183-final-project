@@ -5,65 +5,26 @@ function toRaw(obj) {
     return obj.__v_raw || obj;
 }
 
-function calculateConvexHull(points) {
-    // Clone the points array to avoid modifying the original array
-    const clonedPoints = points.slice();
-    
-    // Sort points by x-coordinate (in case of tie, sort by y-coordinate)
-    clonedPoints.sort((a, b) => {
-        if (a.lat === b.lat) {
-            return a.lng - b.lng;
-        }
-        return a.lat - b.lat;
-    });
-
-    // Define helper functions for cross product and cross product sign
-    function crossProduct(p1, p2, p3) {
-        return (p2.lat - p1.lat) * (p3.lng - p1.lng) - (p3.lat - p1.lat) * (p2.lng - p1.lng);
-    }
-
-    function crossProductSign(p1, p2, p3) {
-        const value = crossProduct(p1, p2, p3);
-        return value === 0 ? 0 : (value > 0 ? 1 : -1);
-    }
-
-    // Initialize lower and upper hull arrays
-    const lowerHull = [];
-    const upperHull = [];
-
-    // Build lower hull
-    for (const point of clonedPoints) {
-        while (lowerHull.length >= 2 && crossProductSign(lowerHull[lowerHull.length - 2], lowerHull[lowerHull.length - 1], point) <= 0) {
-            lowerHull.pop();
-        }
-        lowerHull.push(point);
-    }
-
-    // Build upper hull
-    for (let i = clonedPoints.length - 1; i >= 0; i--) {
-        const point = clonedPoints[i];
-        while (upperHull.length >= 2 && crossProductSign(upperHull[upperHull.length - 2], upperHull[upperHull.length - 1], point) <= 0) {
-            upperHull.pop();
-        }
-        upperHull.push(point);
-    }
-
-    // Remove duplicates and combine lower and upper hulls
-    upperHull.pop();
-    lowerHull.pop();
-    return lowerHull.concat(upperHull);
-}
-
 let app = {};
 
 app.data = {    
     data: function() {
         return {
             map: null,
+            map_bounds: [],
             user_location: null,
+
+            events_in_bounds: [],
+            species_in_bounds: [],
+            selectedSpecies: '',
+            defaultDropdown: '',
+
             drawing_coords: [],
             points: [],
-            polygons: []
+            polygons: [],
+
+            heatmapLayer: null,
+            debounceTimer: null,
         };
     },
     methods: {
@@ -78,10 +39,8 @@ app.data = {
 
         setPosition: function(position) {
             this.user_location = [position.coords.latitude, position.coords.longitude];
-            L.marker(this.user_location).addTo(toRaw(this.map))
-                .bindPopup("Current Location")
-                .openPopup();
             this.map.setView(this.user_location, 13);
+            this.map.on('moveend', this.loadHeatMap);
         },
 
         showLocationError: function(error) {
@@ -110,7 +69,6 @@ app.data = {
             this.drawing_coords.push(e.latlng);
             console.log(this.drawing_coords);
             this.drawPoint(e.latlng);
-            
         },
 
         drawPoint: function(e) {
@@ -127,6 +85,14 @@ app.data = {
 
             let polygon = L.polygon(convexHull).addTo(toRaw(this.map));
             this.polygons.push(polygon);
+
+            axios.post(save_coords_url, {drawing_coords: this.drawing_coords})
+                .then(response => {
+                    console.log('Coordinates saved successfully.');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
         },
 
         clearPolygon: function() {
@@ -140,8 +106,79 @@ app.data = {
             this.points = [];
             this.drawing_coords = [];
 
-        }
+        },
 
+        loadHeatMap: function() {
+
+            // First, get all events that are inside of the box
+            console.log("Loading Heatmap")
+            let bounds = this.map.getBounds();
+            this.map_bounds = {
+                north: bounds.getNorth(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                west: bounds.getWest()
+            };
+
+            let speciesFilter = this.selectedSpecies === this.defaultDropdown ? '' : this.selectedSpecies;
+
+            console.log("Species Filter: ", speciesFilter);
+            
+            axios.post(get_bird_sightings_url, this.map_bounds)
+                .then(response => {
+                    this.events_in_bounds = response.data.sightings;
+                    // console.log("Response received:", response.data);
+                    this.species_in_bounds = [...new Set(this.events_in_bounds.map(event => event.species))];
+                    this.species_in_bounds.sort((a, b) => a.localeCompare(b));
+                    this.defaultDropdown = 'All Species ' + "(" + this.species_in_bounds.length + ")"
+                    this.species_in_bounds.unshift(this.defaultDropdown);
+
+                    let filterActive = false;
+
+                    if (speciesFilter != ''){
+                        // Then it is an actual filter
+                        if (!this.species_in_bounds.includes(speciesFilter)){
+                            this.selectedSpecies = this.defaultDropdown;
+                            filterActive = false;
+                        } else {
+                            this.selectedSpecies = speciesFilter;
+                            filterActive = true;
+                        }
+                    } else {
+                        this.selectedSpecies = this.defaultDropdown;
+                        filterActive = false;
+                    }
+
+                    if (this.heatmapLayer) {
+                        this.map.removeLayer(this.heatmapLayer);
+                    }
+                    let filteredSightings = this.events_in_bounds;
+
+                    if (filterActive){
+                        filteredSightings = this.events_in_bounds.filter(sighting => sighting.species === this.selectedSpecies);
+                    }
+
+                    let heatmapData = filteredSightings.map(sighting => [
+                        sighting.lat, sighting.lon, sighting.intensity
+                    ]);
+
+                    this.heatmapLayer = L.heatLayer(heatmapData, {
+                        radius: 25,
+                        maxOpacity: 1
+                    }).addTo(toRaw(this.map));
+
+                    console.log("Successfully Loaded Heatmap")
+                })
+                .catch(error => console.error('Error fetching bird sightings', error));
+            // this.map('moveend', this.loadHeatMap());
+        },
+
+    },
+
+    computed: {
+        filteredSpeciesList: function() {
+            return this.species_in_bounds;
+        }
     },
 
     mounted() {
@@ -154,15 +191,26 @@ app.data = {
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
+        
         map.on('click', this.mapClickListener);
         map.on('dblclick', this.mapDblClickListener);
+        map.on('moveend', function() {
+            this.map_bounds = map.getBounds();
+            console.log(" North: " + map.getBounds().getNorth() + " South: " + map.getBounds().getSouth() + " East: " + map.getBounds().getEast() + " West: " + map.getBounds().getWest())
+            
+        });
+
         map.doubleClickZoom.disable();
+
+        map.whenReady(() => {
+            this.getUserLocation();
+        });
+
         setTimeout(() => {
             map.invalidateSize();
         }, 100);
 
         this.map = map;
-        this.getUserLocation();
 
     }
 };

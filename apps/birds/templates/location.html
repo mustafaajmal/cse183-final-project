@@ -10,7 +10,12 @@
 <div class="section" id="app" v-cloak>
   <!-- Put here your Vue.js template -->
   <h1 class="title"><i class="fa-solid fa-cube"></i> Location Page</h1>
-  <p>Content: my_value: {{my_value}} </p>
+  <!-- Correctly access lat and lng properties of each coordinate object -->
+  <h2 class="description">Coordinates of Drawn Polygon by User on Map: </h2>
+  <p v-for="(coordinates, index) in drawn_coordinates" :key="index">
+    Latitude: {{ coordinates.lat }}, Longitude: {{ coordinates.lng }}
+  </p>
+
 </div>
 
 
@@ -18,6 +23,7 @@
 <!-- Loads the index-specific js for Vue -->
 <script>
   let my_callback_url = "[[=XML(my_callback_url)]]";
+  let drawn_coordinates = JSON.parse('[[=XML(drawn_coordinates)]]');
 </script>
 <script src="js/index.js"></script>
 [[end]]
