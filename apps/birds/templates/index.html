@@ -4,7 +4,7 @@
   [v-cloak] {
     display: none;
   }
-  
+
   .box-container {
     display: inline-block;
     vertical-align: top;
@@ -21,61 +21,60 @@
       align-items: center;
     }
   }
-  
-  </style>
-  
-  <div class="section" id="app" v-cloak>
-    <div class="columns">
-      <div class="column is-9">
-        <div id="map" style="height: 600px"></div>
-      </div>
-      <div class="column is-3">
-        <div class="box-container">
-          <div class="box">
-              <label class="label">Map Options</label>
-              <div class="field">
-                  <p class="description">Double-Click on the Map to select the boundaries of your region.</p>
-                  <div class="control mt-3">
-                      <button id="create-region" class="button is-success" @click="drawPolygon">Create Region</button>
-                  </div>
-              </div>
-              <div class="field">
-                <div class="control">
-                    <button id="clear-map" class="button is-primary is-danger" @click="clearPolygon">Clear Map</button>
-                </div>
-            </div>
-          </div>
-          <div class="box">
-            <label class="label">Map Filters:</label>
+</style>
+
+<div class="section" id="app" v-cloak>
+  <div class="columns">
+    <div class="column is-9">
+      <div id="map" style="height: 600px"></div>
+    </div>
+    <div class="column is-3">
+      <div class="box-container">
+        <div class="box">
+            <label class="label">Map Options</label>
             <div class="field">
-              <label class="description">Filter by Species</label>
-              <div class="control mt-2">
-                <div class="select">
-                  <select id="species">
-                    <!-- Dynamically Add Species here -->
-                  </select>
+                <p class="description">Double-Click on the Map to select the boundaries of your region.</p>
+                <div class="control mt-3">
+                    <button id="create-region" class="button is-success" @click="drawPolygon">Create Region</button>
                 </div>
-              </div>
             </div>
             <div class="field">
               <div class="control">
-                <button id="stats-btn" class="button is-primary">Statistics on Region</button>
+                  <button id="clear-map" class="button is-primary is-danger" @click="clearPolygon">Clear Map</button>
+              </div>
+          </div>
+        </div>
+        <div class="box">
+          <label class="label">Map Filters:</label>
+          <div class="field">
+            <label class="description">Filter by Species</label>
+            <div class="control mt-2">
+              <div class="select">
+                <select id="species">
+                  <!-- Dynamically Add Species here -->
+                </select>
               </div>
             </div>
           </div>
-
-          <div class="box buttons">
-            <label class="label">More Options:</label>
+          <div class="field">
             <div class="control">
-              <a href="[[=URL('checklist')]]" class="button is-link">Enter Checklist</a>
-              <a href="[[=URL('user_statistics')]]" class="button is-info">My Birding</a>
+              <button id="stats-btn" class="button is-primary">Statistics on Region</button>
             </div>
+          </div>
+        </div>
+
+        <div class="box buttons">
+          <label class="label">More Options:</label>
+          <div class="control">
+            <a href="[[=URL('checklist')]]" class="button is-link">Enter Checklist</a>
+            <a href="[[=URL('user_statistics')]]" class="button is-info">My Birding</a>
+            <a href="[[=URL('location_information')]]" class="button is-warning">Location Information</a>
           </div>
         </div>
       </div>
     </div>
   </div>
-  
+</div>
 
 [[block page_scripts]]
 <!-- Loads the index-specific js for Vue -->

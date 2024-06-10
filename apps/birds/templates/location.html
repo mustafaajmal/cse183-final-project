@@ -6,18 +6,47 @@
 }
 </style>
 
-
 <div class="section" id="app" v-cloak>
-  <!-- Put here your Vue.js template -->
   <h1 class="title"><i class="fa-solid fa-cube"></i> Location Page</h1>
-  <p>Content: my_value: {{my_value}} </p>
+  <div>
+    <label>Filter by Species:</label>
+    <input type="text" v-model="query" @input="search" placeholder="Search for species...">
+    <button @click="fetchRegionStatistics">Statistics on Region</button>
+    <ul>
+      <li v-for="species in common_names" :key="species.COMMON_NAME">
+        {{ species.COMMON_NAME }}
+        <button @click="fetchObservationDates(species)">Load Dates</button>
+        <ul>
+          <li v-for="date in species.observation_dates" :key="date">{{ date }}</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <div>
+    <h2>Statistics</h2>
+    <!-- Add a container for the chart -->
+    <canvas id="speciesChart"></canvas>
+    <!-- Top contributors -->
+    <h3>Top Contributors</h3>
+    <ul>
+      <li v-for="contributor in top_contributors" :key="contributor.name">
+        {{ contributor.name }}: {{ contributor.count }} sightings
+      </li>
+    </ul>
+  </div>
 </div>
-
 
 [[block page_scripts]]
 <!-- Loads the index-specific js for Vue -->
 <script>
   let my_callback_url = "[[=XML(my_callback_url)]]";
+  let load_user_statistics_url = "[[=XML(load_user_statistics_url)]]";
+  let search_url = "[[=XML(search_url)]]";
+  let observation_dates_url = "[[=XML(observation_dates_url)]]";
+  let fetch_statistics_url = "[[=XML(fetch_statistics_url)]]";
 </script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://unpkg.com/vue@next"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="js/index.js"></script>
 [[end]]
