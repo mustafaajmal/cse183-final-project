@@ -182,36 +182,63 @@ def get_user_statistics():
 @action('search')
 @action.uses(db, auth.user, url_signer)
 def search():
-    data = request.json  # Get the JSON payload
-    q = data.get("params", {}).get("q")  # Extract 'q' from 'params'
+    data = request.json
+    q = data.get("params", {}).get("q")
+    option = data.get("params", {}).get("option")
     print("query", q)
-    if not q:
-        common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
-        print("user statistics contains all birds")
-        return dict(common_names = common_names)
-    
+    print("option", option)
     query = (db.sightings.OBSERVATION_COUNT.regexp('^[0-9]+$')) & (db.sightings.OBSERVATION_COUNT.cast('integer') > 0)
-    query &= (db.sightings.COMMON_NAME.contains(q))
-    
-    common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
-    print("searched by query" , q)
+    if q:
+        query &= (db.sightings.COMMON_NAME.contains(q))
+    if option == "recent":
+        query &= (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.checklist.SAMPLING_EVENT_IDENTIFIER)
+        common_names = db(query).select(db.sightings.COMMON_NAME, orderby=~db.checklist.OBSERVATION_DATE, distinct=True).as_list()
+    elif option == "old":
+        query &= (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.checklist.SAMPLING_EVENT_IDENTIFIER)
+        common_names = db(query).select(db.sightings.COMMON_NAME, orderby=db.checklist.OBSERVATION_DATE, distinct=True).as_list()
+    else:
+        common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
+    print("searched by query", q)
     return dict(common_names=common_names)
     
-@action('observation_dates', method=["POST"]) 
+@action('observation_dates', method=["POST"])
 @action('observation_dates')
 @action.uses(db, auth.user, url_signer)
 def observation_date():
     data = request.json
     common_name = data.get("common_name")
-    print("retrieving observation dates by ", common_name)
+    observation_date = data.get("observation_date")
     if not common_name:
-        print("ERROR: common_name not found")
-        return dict(observation_dates=[])
+        return dict(observation_dates=[], most_recent_sighting=None)
     
-    query = (db.sightings.COMMON_NAME == common_name) & (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.sightings.SAMPLING_EVENT_IDENTIFIER)
-    observation_dates = db(query).select(db.checklist.OBSERVATION_DATE).as_list()
-    print("observation_dates: ", observation_dates)
-    return dict(observation_dates=observation_dates)
+    query = (db.sightings.COMMON_NAME == common_name) & \
+            (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.checklist.SAMPLING_EVENT_IDENTIFIER)
+    
+    if observation_date:
+        query &= (db.checklist.OBSERVATION_DATE == observation_date)
+        most_recent_sighting = db(query).select(
+            db.checklist.LATITUDE, 
+            db.checklist.LONGITUDE, 
+            orderby=~db.checklist.OBSERVATION_DATE, 
+            limitby=(0, 1)
+        ).first()
+    else:
+        most_recent_sighting = db(query).select(
+            db.checklist.LATITUDE, 
+            db.checklist.LONGITUDE, 
+            orderby=~db.checklist.OBSERVATION_DATE, 
+            limitby=(0, 1)
+        ).first()
+
+    if most_recent_sighting:
+        most_recent_sighting = dict(
+            LATITUDE=most_recent_sighting.LATITUDE,
+            LONGITUDE=most_recent_sighting.LONGITUDE
+        )
+
+    observation_dates = db(query).select(db.checklist.OBSERVATION_DATE, distinct=True).as_list()
+
+    return dict(observation_dates=observation_dates, most_recent_sighting=most_recent_sighting)
 
 @action('my_callback')
 @action.uses() # Add here things like db, auth, etc.
