@@ -103,31 +103,46 @@ def save_coords():
     return 'Coordinates saved successfully.'
 
 @action('checklist')
-@action.uses('checklist.html', db, auth.user)
+@action.uses('checklist.html', db, auth, url_signer)
 def checklist():
+    if not auth.current_user:
+        redirect(URL('auth/login'))
     return dict(
-        load_species_url = URL('load_species'),
-        submit_checklist_url = URL('submit_checklist')
+        checklist_data_url=URL('checklist_data'),
+        my_checklist_url=URL('my_checklist'),
+        update_sightings_url=URL('update_sightings')
     )
 
-@action('load_species')
-@action.uses(db, auth.user)
-def load_species():
-    species = db(db.species).select().as_list()
-    return dict(species=species)
+@action('checklist_data', method="GET")
+@action.uses(db, auth)
+def checklist_data():
+    species_sightings = db(db.sightings).select(
+        db.sightings.COMMON_NAME.with_alias('common_name'),
+        db.sightings.OBSERVATION_COUNT.sum().with_alias('total_sightings'),
+        groupby=db.sightings.COMMON_NAME
+    ).as_list()
+    return dict(checklist_data=species_sightings)
 
-@action('submit_checklist', method='POST')
-@action.uses(db, auth.user)
-def submit_checklist():
-    user_email = get_user_email()
-    checklist = request.json.get('checklist', [])
-    for item in checklist:
-        db.checklist_table.insert(
-            user_email=user_email,
-            species_name=item['COMMON_NAME'],
-            num_seen=item.get('numSeen', 0)
-        )
-    return dict(message="Checklist submitted successfully")
+@action('update_sightings', method=["POST"])
+@action.uses(db, auth, url_signer)
+def update_sightings():
+    common_name = request.json.get('common_name')
+    new_sightings = request.json.get('new_sightings')
+
+    if common_name is None or new_sightings is None:
+        abort(400, "Invalid request")
+
+    sightings = db(db.sightings.COMMON_NAME == common_name).select().first()
+
+    if sightings:
+        sightings.update_record(OBSERVATION_COUNT=sightings.OBSERVATION_COUNT + new_sightings)
+        total_sightings = sightings.OBSERVATION_COUNT
+    else:
+        total_sightings = new_sightings
+        db.sightings.insert(COMMON_NAME=common_name, OBSERVATION_COUNT=total_sightings)
+
+    return dict(total_sightings=total_sightings)
+
 
 @action('my_checklists')
 @action.uses('my_checklists.html', db, auth.user)

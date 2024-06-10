@@ -49,7 +49,8 @@ db.define_table(
     'checklist_table',
     Field('user_email', default=get_user_email),
     Field('date', 'datetime', default=get_time),
-    Field('data', 'json')
+    Field('species_name', 'string'),
+    Field('numSeen', 'integer')
 )
 
 if db(db.species).isempty():
@@ -65,20 +66,23 @@ if db(db.checklist).isempty():
         db.checklist.import_from_csv_file(dumpfile)
         db.commit()
 
-def prime_sightings():
+def load_sightings():
     if db(db.sightings).isempty():
         with open('./csvfiles/sightings.csv', 'r') as f:
             reader = csv.reader(f)
             next(reader)  # Skip the header row
             for row in reader:
+                try: 
+                    OBSERVATION_COUNT = int(row[2])
+                except ValueError:
+                    OBSERVATION_COUNT = 0
                 db.sightings.insert(
-                    sei=row[0],
-                    specie=row[1],
-                    count=row[2],
-                    favorite=False,  # Default value
+                    SAMPLING_EVENT_IDENTIFIER=row[0],
+                    COMMON_NAME=row[1],
+                    OBSERVATION_COUNT=OBSERVATION_COUNT,
                     user_email=None
                 )
 
-prime_sightings()
+load_sightings()
 
 db.commit()
