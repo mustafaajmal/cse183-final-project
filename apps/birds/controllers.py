@@ -103,48 +103,65 @@ def save_coords():
     return 'Coordinates saved successfully.'
 
 @action('checklist')
-@action.uses('checklist.html', db, auth.user, url_signer, session)
+@action.uses('checklist.html', db, auth.user)
 def checklist():
-    drawn_coordinates = session.get('drawn_coordinates', [])
-    print("Checklist Call - Drawn Coordinates: ", drawn_coordinates)
     return dict(
-        my_callback_url = URL('my_callback', signer=url_signer),
-        load_user_statistics_url = URL('load_user_statistics'),
-        search_url = URL('search'),
-        observation_dates_url = URL('observation_dates'),
-        # Richard's Note:
-        # These are the coordinates for the region that the user selects on the map
-        # They are of format: [{lat: 0.0, lng: 0.0}, {lat: 0.0, lng: 0.0}, ..., etc.]
-        drawn_coordinates = json.dumps(drawn_coordinates),
+        load_species_url = URL('load_species'),
+        submit_checklist_url = URL('submit_checklist')
     )
+
+@action('load_species')
+@action.uses(db, auth.user)
+def load_species():
+    species = db(db.species).select().as_list()
+    return dict(species=species)
 
 @action('submit_checklist', method='POST')
-@action.uses(db, auth.user, url_signer)
+@action.uses(db, auth.user)
 def submit_checklist():
-    data = request.json
+    user_email = get_user_email()
+    checklist = request.json.get('checklist', [])
+    for item in checklist:
+        db.checklist_table.insert(
+            user_email=user_email,
+            species_name=item['COMMON_NAME'],
+            num_seen=item.get('numSeen', 0)
+        )
+    return dict(message="Checklist submitted successfully")
 
-    # Extract data from the request
-    SAMPLING_EVENT_IDENTIFIER = data.get('SAMPLING_EVENT_IDENTIFIER')
-    LATITUDE = data.get('LATITUDE')
-    LONGITUDE = data.get('LONGITUDE')
-    OBSERVATION_DATE = data.get('OBSERVATION_DATE')
-    TIME_OBSERVATIONS_STARTED = data.get('TIME_OBSERVATIONS_STARTED')
-    OBSERVER_ID = data.get('OBSERVER_ID')
-    DURATION_MINUTES = data.get('DURATION_MINUTES')
-
-    # Save the checklist to the database
-    checklist_id = db.checklist.insert(
-        SAMPLING_EVENT_IDENTIFIER=SAMPLING_EVENT_IDENTIFIER,
-        LATITUDE=LATITUDE,
-        LONGITUDE=LONGITUDE,
-        OBSERVATION_DATE=OBSERVATION_DATE,
-        TIME_OBSERVATIONS_STARTED=TIME_OBSERVATIONS_STARTED,
-        OBSERVER_ID=OBSERVER_ID,
-        DURATION_MINUTES=DURATION_MINUTES
+@action('my_checklists')
+@action.uses('my_checklists.html', db, auth.user)
+def my_checklists():
+    return dict(
+        load_checklists_url=URL('load_checklists'),
+        delete_checklist_url=URL('delete_checklist'),
+        edit_checklist_url=URL('edit_checklist')
     )
 
-    return dict(checklist_id=checklist_id)
+@action('load_checklists')
+@action.uses(db, auth.user)
+def load_checklists():
+    user_email = get_user_email()
+    checklists = db(db.checklist_table.user_email == user_email).select().as_list()
+    return dict(checklists=checklists)
 
+@action('delete_checklist/<checklist_id:int>', method='DELETE')
+@action.uses(db, auth.user)
+def delete_checklist(checklist_id=None):
+    if checklist_id:
+        db(db.checklist_table.id == checklist_id).delete()
+        return dict(message="Checklist deleted")
+    return dict(message="Checklist not deleted")
+
+@action('edit_checklist', method='POST')
+@action.uses(db, auth.user)
+def edit_checklist():
+    checklist_id = request.json.get('id')
+    data = request.json.get('data')
+    if checklist_id:
+        db(db.checklist_table.id == checklist_id).update(data=data)
+        return dict(message="Checklist updated")
+    return dict(message="Checklist not updated")
 
 @action('location')
 @action.uses('location.html', db, auth.user, url_signer, session)
@@ -179,7 +196,6 @@ def get_user_statistics():
     return dict(common_names = common_names)
 
 @action('search', method=["POST"])
-@action('search')
 @action.uses(db, auth.user, url_signer)
 def search():
     data = request.json
@@ -202,7 +218,6 @@ def search():
     return dict(common_names=common_names)
     
 @action('observation_dates', method=["POST"])
-@action('observation_dates')
 @action.uses(db, auth.user, url_signer)
 def observation_date():
     data = request.json

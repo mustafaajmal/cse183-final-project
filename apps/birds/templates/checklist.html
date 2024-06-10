@@ -1,11 +1,10 @@
 [[extend 'layout.html']]
 
 <style>
-[v-cloak] {
-     display: none;
-}
+  [v-cloak] {
+    display: none;
+  }
 </style>
-
 
 <div class="section" id="app" v-cloak>
   <h1 class="title"><i class="fa-solid fa-cube"></i> Checklist Page</h1>
@@ -20,10 +19,10 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(species, index) in speciesList"> <!-- Iterate over speciesList -->
+      <tr v-for="(species, index) in filteredSpecies" :key="species.COMMON_NAME">
         <td>{{ species.COMMON_NAME }}</td>
         <td>
-          <input type="number" v-model="species.numSeen">
+          <input type="number" v-model.number="species.numSeen">
         </td>
         <td>
           <button @click="increment(index)">+</button>
@@ -35,14 +34,10 @@
   <button @click="submitChecklist">Submit</button>
 </div>
 
-
-
 [[block page_scripts]]
-<!-- Loads the index-specific js for Vue -->
 <script>
-  let load_user_statistics_url = "[[=XML(load_user_statistics_url)]]";
-  let search_url = "[[=XML(search_url)]]";
-  let observation_dates_url = "[[=XML(observation_dates_url)]]"; 
+  const load_species_url = "[[=URL('load_species')]]";
+  const submit_checklist_url = "[[=URL('submit_checklist')]]";
 </script>
-<script src="js/index.js"></script>
+<script src="js/checklist.js"></script>
 [[end]]

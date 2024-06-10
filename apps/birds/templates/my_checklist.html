@@ -1,0 +1,39 @@
+[[extend 'layout.html']]
+
+<style>
+  [v-cloak] {
+    display: none;
+  }
+</style>
+
+<div class="section" id="app" v-cloak>
+  <h1 class="title"><i class="fa-solid fa-list"></i> My Checklists</h1>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Data</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(checklist, index) in checklists" :key="checklist.id">
+        <td>{{ checklist.date }}</td>
+        <td><pre>{{ checklist.data }}</pre></td>
+        <td>
+          <button @click="editChecklist(index)">Edit</button>
+          <button @click="deleteChecklist(checklist.id)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+[[block page_scripts]]
+<script>
+  const load_checklists_url = "[[=URL('load_checklists')]]";
+  const delete_checklist_url = "[[=URL('delete_checklist')]]";
+  const edit_checklist_url = "[[=URL('edit_checklist')]]";
+</script>
+<script src="js/my_checklists.js"></script>
+[[end]]

@@ -6,6 +6,7 @@ import datetime
 from .common import db, Field, auth
 from pydal.validators import *
 import os
+import csv
 
 
 
@@ -46,8 +47,9 @@ db.define_table(
 
 db.define_table(
     'checklist_table',
-        Field('COMMON_NAME', 'string'),
-        Field('OBSERVATION_TOTAL', 'integer'),
+    Field('user_email', default=get_user_email),
+    Field('date', 'datetime', default=get_time),
+    Field('data', 'json')
 )
 
 if db(db.species).isempty():
@@ -62,5 +64,21 @@ if db(db.checklist).isempty():
     with open(os.path.join(os.getcwd(), r'apps/birds/uploads/checklists.csv'), 'r') as dumpfile:
         db.checklist.import_from_csv_file(dumpfile)
         db.commit()
+
+def prime_sightings():
+    if db(db.sightings).isempty():
+        with open('./csvfiles/sightings.csv', 'r') as f:
+            reader = csv.reader(f)
+            next(reader)  # Skip the header row
+            for row in reader:
+                db.sightings.insert(
+                    sei=row[0],
+                    specie=row[1],
+                    count=row[2],
+                    favorite=False,  # Default value
+                    user_email=None
+                )
+
+prime_sightings()
 
 db.commit()
