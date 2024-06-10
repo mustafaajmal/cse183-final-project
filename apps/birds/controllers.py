@@ -109,12 +109,42 @@ def checklist():
     print("Checklist Call - Drawn Coordinates: ", drawn_coordinates)
     return dict(
         my_callback_url = URL('my_callback', signer=url_signer),
-
+        load_user_statistics_url = URL('load_user_statistics'),
+        search_url = URL('search'),
+        observation_dates_url = URL('observation_dates'),
         # Richard's Note:
         # These are the coordinates for the region that the user selects on the map
         # They are of format: [{lat: 0.0, lng: 0.0}, {lat: 0.0, lng: 0.0}, ..., etc.]
         drawn_coordinates = json.dumps(drawn_coordinates),
     )
+
+@action('submit_checklist', method='POST')
+@action.uses(db, auth.user, url_signer)
+def submit_checklist():
+    data = request.json
+
+    # Extract data from the request
+    SAMPLING_EVENT_IDENTIFIER = data.get('SAMPLING_EVENT_IDENTIFIER')
+    LATITUDE = data.get('LATITUDE')
+    LONGITUDE = data.get('LONGITUDE')
+    OBSERVATION_DATE = data.get('OBSERVATION_DATE')
+    TIME_OBSERVATIONS_STARTED = data.get('TIME_OBSERVATIONS_STARTED')
+    OBSERVER_ID = data.get('OBSERVER_ID')
+    DURATION_MINUTES = data.get('DURATION_MINUTES')
+
+    # Save the checklist to the database
+    checklist_id = db.checklist.insert(
+        SAMPLING_EVENT_IDENTIFIER=SAMPLING_EVENT_IDENTIFIER,
+        LATITUDE=LATITUDE,
+        LONGITUDE=LONGITUDE,
+        OBSERVATION_DATE=OBSERVATION_DATE,
+        TIME_OBSERVATIONS_STARTED=TIME_OBSERVATIONS_STARTED,
+        OBSERVER_ID=OBSERVER_ID,
+        DURATION_MINUTES=DURATION_MINUTES
+    )
+
+    return dict(checklist_id=checklist_id)
+
 
 @action('location')
 @action.uses('location.html', db, auth.user, url_signer, session)
@@ -188,7 +218,6 @@ def observation_date():
 def my_callback():
     # The return value should be a dictionary that will be sent as JSON.
 
-    '''
     if db(db.species).isempty():
         with open('species.csv', 'r') as f:
             reader = csv.reader(f)
@@ -208,5 +237,4 @@ def my_callback():
 
     return dict(my_value=3, species = species, sightings = sightings, checklist = checklist)
 
-    '''
 

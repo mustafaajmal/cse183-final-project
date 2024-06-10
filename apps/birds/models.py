@@ -44,6 +44,12 @@ db.define_table(
     Field('DURATION_MINUTES', 'double')
 )
 
+db.define_table(
+    'checklist_table',
+        Field('COMMON_NAME', 'string'),
+        Field('OBSERVATION_TOTAL', 'integer'),
+)
+
 if db(db.species).isempty():
     with open(os.path.join(os.getcwd(), r'apps/birds/uploads/species.csv'), 'r') as dumpfile:
         db.species.import_from_csv_file(dumpfile)
@@ -56,6 +62,5 @@ if db(db.checklist).isempty():
     with open(os.path.join(os.getcwd(), r'apps/birds/uploads/checklists.csv'), 'r') as dumpfile:
         db.checklist.import_from_csv_file(dumpfile)
         db.commit()
-
 
 db.commit()
