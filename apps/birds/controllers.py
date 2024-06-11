@@ -249,22 +249,48 @@ def submit_checklist():
     redirect(URL('my_checklists'))
 
 @action('delete_checklist/<checklist_id:int>', method='DELETE')
-@action.uses(db, auth.user)
-def delete_checklist(checklist_id=None):
-    if checklist_id:
-        db(db.checklist_table.id == checklist_id).delete()
-        return dict(message="Checklist deleted")
-    return dict(message="Checklist not deleted")
+@action.uses(db, auth.user, url_signer)
+def delete_checklist(checklist_id):
+    # Check if the checklist exists and belongs to the current user
+    user_email = get_user_email()
+    checklist = db(db.checklist.id == checklist_id).select().first()
+    
+    if not checklist:
+        return dict(message="Checklist not found")
+    
+    if checklist.OBSERVER_ID != user_email:
+        return dict(message="Not authorized to delete this checklist")
 
-@action('edit_checklist', method='POST')
-@action.uses(db, auth.user)
-def edit_checklist():
-    checklist_id = request.json.get('id')
-    data = request.json.get('data')
-    if checklist_id:
-        db(db.checklist_table.id == checklist_id).update(data=data)
-        return dict(message="Checklist updated")
-    return dict(message="Checklist not updated")
+    # Delete the checklist
+    db(db.checklist.id == checklist_id).delete()
+    
+    return dict(message="Checklist deleted successfully")
+
+@action('edit_checklist/<checklist_id:int>', method=['GET', 'POST'])
+@action.uses(db, auth.user, 'edit_checklist.html')
+def edit_checklist(checklist_id):
+    checklist = db.checklist[checklist_id]
+    if not checklist:
+        redirect(URL('my_checklists'))
+    
+    if request.method == 'GET':
+        return dict(
+            checklist=checklist,
+            checklist_id=checklist_id
+        )
+    
+    if request.method == 'POST':
+        checklist.update_record(
+            SAMPLING_EVENT_IDENTIFIER=request.forms.get('sampling_event_identifier'),
+            LATITUDE=float(request.forms.get('latitude')),
+            LONGITUDE=float(request.forms.get('longitude')),
+            OBSERVATION_DATE=request.forms.get('observation_date'),
+            TIME_OBSERVATIONS_STARTED=request.forms.get('time_observations_started'),
+            OBSERVER_ID=get_user_email(),
+            DURATION_MINUTES=float(request.forms.get('duration_minutes'))
+        )
+        redirect(URL('my_checklists'))
+
 
 @action('location')
 @action.uses('location.html', db, auth.user, url_signer, session)
