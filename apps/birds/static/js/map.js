@@ -25,10 +25,14 @@ app.data = {
 
             heatmapLayer: null,
             debounceTimer: null,
+
+            loading: false,
+            tooltipVisible: {}
         };
     },
     methods: {
 
+        // Prompts user for location
         getUserLocation: function () {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(this.setPosition, this.showLocationError);
@@ -37,12 +41,16 @@ app.data = {
             }
         },
 
+        // Sets position of map to position [lat, long]
+        // Also enables heatMap loading on map-moveend
         setPosition: function(position) {
             this.user_location = [position.coords.latitude, position.coords.longitude];
-            this.map.setView(this.user_location, 13);
+            this.map.setView(this.user_location, 15);
+            this.map.on('load', this.loadHeatMap);
             this.map.on('moveend', this.loadHeatMap);
         },
 
+        // Debugger if location could not be found
         showLocationError: function(error) {
             switch (error.code) {
                 case error.PERMISSION_DENIED:
@@ -60,10 +68,8 @@ app.data = {
             }
         },
 
-        mapClickListener: function(e) {
-            // Handle click
-        },
-
+        // Double Click event listener for map
+        // When user double clicks, drawn a point and store it to this.drawing_coords
         mapDblClickListener: function(e) {
             // Handle double click
             this.drawing_coords.push(e.latlng);
@@ -71,11 +77,14 @@ app.data = {
             this.drawPoint(e.latlng);
         },
 
+        // Drawing the point on the map
         drawPoint: function(e) {
             let point = L.circleMarker(e, { radius: 5, color: 'red' }).addTo(toRaw(this.map));
             this.points.push(point);
         },
 
+        // Connecting points together and building largest polygon
+        // Uses calculateConvexHull() to determine ordering for largest polygon
         drawPolygon: function() {
             const convexHull = calculateConvexHull(this.drawing_coords);
             this.polygons.forEach(polygon => {
@@ -95,6 +104,7 @@ app.data = {
                 });
         },
 
+        // Clears points list and clears polygon
         clearPolygon: function() {
             this.points.forEach(point => {
                 this.map.removeLayer(point);
@@ -107,11 +117,17 @@ app.data = {
             this.drawing_coords = [];
 
         },
-
+        
+        // Handles fetching data of map frame from database and loading heatmap
+        // Disables movement of map data is loading
         loadHeatMap: function() {
 
             // First, get all events that are inside of the box
-            console.log("Loading Heatmap")
+            console.log("Loading Heatmap");
+
+            this.loading = true;
+
+
             let bounds = this.map.getBounds();
             this.map_bounds = {
                 north: bounds.getNorth(),
@@ -167,10 +183,56 @@ app.data = {
                         maxOpacity: 1
                     }).addTo(toRaw(this.map));
 
-                    console.log("Successfully Loaded Heatmap")
+                    
+                    console.log("Successfully Loaded Heatmap");
+                    this.loading = false;
                 })
-                .catch(error => console.error('Error fetching bird sightings', error));
+                .catch(error => console.error('Error fetching bird sightings', error))
             // this.map('moveend', this.loadHeatMap());
+        },
+
+        showToolTip: function(event, tooltipId) {
+            // Toggle the visibility of the specified tooltip
+            Object.keys(this.tooltipVisible).forEach(id => {
+                if (id !== tooltipId){
+                    delete this.tooltipVisible[id];
+                }
+            });
+
+            if (this.tooltipVisible[tooltipId]) {
+                delete this.tooltipVisible[tooltipId];
+            } else {
+                this.tooltipVisible = { ...this.tooltipVisible, [tooltipId]: true };
+
+                // Adjust the position of the tooltip
+                this.$nextTick(() => {
+                    let tooltip = document.getElementById(tooltipId);
+                    if (tooltip) {
+                        tooltip.style.display = 'block';
+                        let iconRect = event.currentTarget.getBoundingClientRect();
+                        tooltip.style.left = `${iconRect.left + 25}px`;
+                        
+                        let maxTranslatePercentage = -70;
+                        let maxTooltipWidth = 200;
+                        let tooltipWidth = tooltip.offsetWidth;
+                        let percentage = maxTranslatePercentage * (1 - Math.log(tooltipWidth + 1) / Math.log(maxTooltipWidth + 1));
+                        console.log(percentage);
+                        console.log(tooltipWidth);
+                        tooltip.style.transform = `translateY(${maxTranslatePercentage - percentage}%)`;
+                        
+                    }
+                });
+            }
+        },
+
+        hideTooltip: function(event) {
+            if (!event.target.closest('.tooltip-content') && !event.target.closest('.info-icon')) {
+                this.tooltipVisible = {}; // Hide all tooltips
+            }
+        },
+
+        handleWindowResize() {
+            this.tooltipVisible = {};
         },
 
     },
@@ -211,6 +273,8 @@ app.data = {
         }, 100);
 
         this.map = map;
+        document.addEventListener('click', this.hideTooltip);
+        window.addEventListener('resize', this.handleWindowResize);
 
     }
 };

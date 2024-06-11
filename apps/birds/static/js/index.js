@@ -184,6 +184,7 @@ app.data = {
     mounted() {
         // index.html Mount()
 
+        /*
         const map = this.map = L.map('map', {
             center: [0, 0],
             zoom: 15
@@ -211,6 +212,7 @@ app.data = {
         }, 100);
 
         this.map = map;
+        */
 
     }
 };

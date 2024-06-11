@@ -27,22 +27,94 @@
     overflow: hidden; /* Hide overflowed content */
 }
 
-@media screen and (max-width: 1000px) {
-    .column.is-3 {
+@media screen and (max-width: 1200px) {
+    .column.is-4 {
         display: flex;
         flex-direction: column;
         align-items: center;
     }
 }
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Styling for the info icon */
+.info-icon {
+    display: inline-block;
+    margin-left: 8px;
+    color: #007BFF; /* Blue color for the icon */
+    cursor: pointer;
+    font-size: 1.2em;
+    position: relative; /* Ensure the tooltip is positioned relative to this icon */
+}
+
+.info-icon i {
+    vertical-align: middle;
+}
+
+/* Styling for the tooltip content */
+/* Styling for the tooltip content */
+.tooltip-content {
+    position: absolute;
+    background: #333;
+    color: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    z-index: 1000;
+    max-width: 200px;
+    font-size: 0.9em;
+    opacity: 0.9;
+    display: none; /* Hidden by default */
+    white-space: normal; /* Allow text wrapping */
+
+}
+
+.tooltip-content::after {
+    content: '';
+    position: absolute;
+    left: -10px; /* Position the arrow just to the left of the tooltip */
+    top: 50%;
+    transform: translateY(-50%); /* Vertically center the arrow */
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #333 transparent transparent; /* Arrow pointing left */
+}
+
+
+/* Tooltip visible class */
+.tooltip-visible {
+    display: block;
+}
 </style>
+
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+
 
 <div class="section" id="app" v-cloak>
     <div class="columns">
-        <div class="column is-9">
-            <div id="map" style="height: 600px"></div>
+        <div class="column is-8" style="position: relative;">
+            <div id="map" style="height: 650px;"></div>
+            <div id="loading-overlay" v-if="loading" class="loading-overlay">
+                <p>Updating Heatmap... Please wait</p>
+            </div>
         </div>
-        <div class="column is-3">
-            <div class="box-container">
+        <div class="column is-4">
+            <div class="box-container ml-4">
               <div class="box">
                 <label class="label">User Options</label>
                 <div class="control">
@@ -59,14 +131,27 @@
                     </div>
                     <div class="field">
                       <div class="control">
-                        <a href="[[=URL('location')]]" class="button is-primary">Region/Location Information</a>
+                        <a href="[[=URL('location')]]" class="button is-primary">Location Information</a>
+                        <span class="info-icon" @click="showToolTip($event, 'region-info')">
+                            <i class="bi bi-info-circle"></i>
+                          </span>
+                      </div>
+                      <div id="region-info" class="tooltip-content" v-if="tooltipVisible['region-info']">
+                        Create a region on the map and then click button to get some interesting statistics about the region!
                       </div>
                     </div>
                     <div class="field">
                       <div class="control">
                         <a href="[[=URL('checklist')]]" class="button is-link">Enter Checklist</a>
+                        <span class="info-icon" @click="showToolTip($event, 'checklist-info')">
+                            <i class="bi bi-info-circle"></i>
+                        </span>
+                      </div>
+                      <div id="checklist-info" class="tooltip-content" v-if="tooltipVisible['checklist-info']">
+                        Create a region on the map and then click button to create a checklist for this region/location!
                       </div>
                     </div>
+                    
                     <div class="field">
                       <div class="control">
                           <button id="clear-map" class="button is-primary is-danger" @click="clearPolygon">Clear Map</button>

@@ -188,7 +188,7 @@ def location():
 
         # Richard's Note:
         # These are the coordinates for the region that the user selects on the map
-        # They are of format: [{lat: 0.0, lng: 0.0}, {lat: 0.0, lng: 0.0}, ..., etc.]
+        # They are of format: [{'lat': 0.0, 'lng': 0.0}, {lat: 0.0, lng: 0.0}, ..., etc.]
         drawn_coordinates = json.dumps(drawn_coordinates),
     )
 
