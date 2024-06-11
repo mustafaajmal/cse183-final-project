@@ -283,7 +283,7 @@ app.data = {
 
         setTimeout(() => {
             this.loadHeatMap();
-        }, 4000);
+        }, 10000);
 
         this.map = map;
         document.addEventListener('click', this.hideTooltip);
