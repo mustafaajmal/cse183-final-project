@@ -23,48 +23,46 @@
   }
   
   #map {
-    width: 35%;
+    width: 100%;
+    height: 300px;
+    margin-bottom: 20px;
   }
   
   ul {
-    list-style-type: none; /* Remove default bullet points */
-    padding-left: 0; /* Remove default padding */
+    list-style-type: none; /* Remove bullet points */
+    padding: 0;
   }
 
   ul ul {
-    padding-left: 0; /* Remove indent for nested list */
+    list-style-type: none; /* Remove bullet points for nested lists */
+    padding-left: 20px; /* Indent the nested list */
   }
 
   ul li {
     margin-bottom: 10px; /* Add some spacing between list items */
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: background-color 0.3s;
   }
 
-  .species-button {
-    margin-bottom: 5px;
-    display: inline-block;
-    width: 100%;
-    text-align: left;
-    padding: 0.5em 1em;
+  ul li:hover {
+    background-color: #e6e6e6;
   }
 
-  .date-list {
-    display: flex;
-    flex-wrap: wrap; /* Allow wrapping */
-    gap: 10px; /* Space between buttons */
-    margin-top: 10px;
+  .title {
+    font-size: 2em;
+    margin-bottom: 20px;
   }
 
-  .date-button {
-    padding: 0.3em 0.8em;
-    font-size: 0.9em;
-    flex: 0 1 150px; /* Grow to fill available space, but not exceed 150px */
-    text-align: center; /* Center text in button */
-    margin: 5px; /* Additional margin for spacing */
-    box-sizing: border-box; /* Include padding and border in element's width and height */
+  .field.is-grouped {
+    margin-bottom: 20px;
   }
 
-  .is-hidden {
-    display: none;
+  .columns {
+    margin-top: 20px;
   }
 </style>
 
@@ -76,7 +74,7 @@
 
 <div class="section" id="statistics-app" v-cloak>
   <h1 class="title"><i class="fa-solid fa-cube"></i> User Statistics Page</h1>
-  <p>The user statistics pages allows the user to search birds and either search by recent or first sightings. Clicking on the species will direct you to dates found. Clicking on those dates will direct the map to the location of where it was found recently. </p>
+  <p>The user statistics pages allow the user to search birds and either search by recent or first sightings. Clicking on the species will direct you to dates found. Clicking on those dates will direct the map to the location of where it was found recently. </p>
   <div class="field is-grouped">
     <div class="control is-three-quarters">
       <input class="input" type="text" v-model="query" placeholder="Search common names">
@@ -95,23 +93,15 @@
       <button class="button is-primary" @click="search">Search</button>
     </div>
   </div>
-  <div>
-    <div id="map" style="height: 300px"></div>
-  </div>
+  <div id="map"></div>
   <div class="columns is-multiline">
     <div class="column is-one-third" v-for="(name, index) in common_names" :key="name.COMMON_NAME">
       <ul>
-        <li>
-          <!-- Main button for the species name with toggle functionality -->
-          <button class="button is-link is-light species-button" @click="toggleObservationDates(index)">
-            {{ name.COMMON_NAME }}
-          </button>
-          <ul :class="{'is-hidden': !name.isExpanded}" class="date-list">
-            <li v-for="date in name.observation_dates" :key="date.OBSERVATION_DATE">
-              <!-- Secondary button for the observation dates -->
-              <button class="button is-small is-info is-outlined date-button" @click="moveMapToObservation(name, date)">
-                {{ date.OBSERVATION_DATE }}
-              </button>
+        <li @click="fetchObservationDates(name)">
+          {{ name.COMMON_NAME }}
+          <ul>
+            <li v-for="date in name.observation_dates" :key="date.OBSERVATION_DATE" @click="moveMapToObservation(name, date)">
+              {{ date.OBSERVATION_DATE }}
             </li>
           </ul>
         </li>
@@ -152,37 +142,6 @@
     }
 
     window.map = map; // Make map accessible globally
-  });
-
-  // Adding the toggle functionality to Vue.js data
-  new Vue({
-    el: '#statistics-app',
-    data: {
-      query: '',
-      common_names: [
-        { COMMON_NAME: 'White-crowned Sparrow', observation_dates: [
-          { OBSERVATION_DATE: '2021-02-01' },
-          { OBSERVATION_DATE: '2021-02-02' },
-          { OBSERVATION_DATE: '2021-02-03' },
-          { OBSERVATION_DATE: '2021-02-04' },
-          { OBSERVATION_DATE: '2021-02-05' },
-          { OBSERVATION_DATE: '2021-02-06' },
-          { OBSERVATION_DATE: '2021-02-07' },
-          { OBSERVATION_DATE: '2021-02-08' },
-          { OBSERVATION_DATE: '2021-02-09' },
-        ], isExpanded: false },
-        // Add your other bird data here with `isExpanded` property for toggle functionality
-      ]
-    },
-    methods: {
-      toggleObservationDates(index) {
-        this.common_names[index].isExpanded = !this.common_names[index].isExpanded;
-      },
-      moveMapToObservation(name, date) {
-        // Logic to move the map to the observation location
-        alert(`Move map to the location of ${name.COMMON_NAME} observed on ${date.OBSERVATION_DATE}`);
-      }
-    }
   });
 </script>
 [[end]]
