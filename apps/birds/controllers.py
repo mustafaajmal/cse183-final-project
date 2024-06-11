@@ -240,9 +240,9 @@ def user_statistics():
 @action('load_user_statistics')
 @action.uses(db, auth.user, url_signer)
 def get_user_statistics():
-    query = (db.sightings.OBSERVATION_COUNT.regexp('^[0-9]+$')) & (db.sightings.OBSERVATION_COUNT.cast('integer') > 0)
-    common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
+    common_names = db(db.sightings).select(db.sightings.COMMON_NAME, distinct=True).as_list()
     return dict(common_names=common_names)
+
 
 @action('search', method=["POST"])
 @action.uses(db, auth.user, url_signer)

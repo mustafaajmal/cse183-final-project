@@ -268,6 +268,7 @@ app.data = {
 
         map.whenReady(() => {
             this.getUserLocation();
+            this.loadHeatMap();
         });
 
         setTimeout(() => {
