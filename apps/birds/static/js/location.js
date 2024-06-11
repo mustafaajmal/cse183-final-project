@@ -8,10 +8,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     { id: 1, name: 'Blue Jay', checklists: 5, sightings: 15 },
                     { id: 2, name: 'Carolina Wren', checklists: 8, sightings: 25 },
                     { id: 3, name: 'House Sparrow', checklists: 6, sightings: 18 },
+                    { id: 4, name: 'Red-winged Blackbird', checklists: 7, sightings: 20 },
                     { id: 4, name: 'Red-winged Blackbird', checklists: 7, sightings: 20 }
                 ],
                 graphData: [],
                 topContributors: [
+                    { name: 'John Doe', email: 'john@example.com' },
+                    { name: 'Jane Smith', email: 'jane@example.com' },
+                    { name: 'Richard Roe', email: 'richard@example.com' },
                     { name: 'John Doe', email: 'john@example.com' },
                     { name: 'Jane Smith', email: 'jane@example.com' },
                     { name: 'Richard Roe', email: 'richard@example.com' }
