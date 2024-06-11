@@ -37,6 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Dummy data is already set in the data properties
                 let p1 = drawn_coordinates[0];
                 let p2 = drawn_coordinates[1];
+
+                console.log("Fetch Region Data: ", drawn_coordinates);
                 
                 let north = Math.max(p1['lat'], p2['lat']);
                 let south = Math.min(p1['lat'], p2['lat']);

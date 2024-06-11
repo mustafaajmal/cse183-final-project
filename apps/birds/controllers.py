@@ -138,7 +138,15 @@ def get_bird_sightings():
 @action.uses(db, auth.user, url_signer, session)
 def save_coords():
     data = request.json
-    session['drawn_coordinates'] = data.get('drawing_coords')
+    drawing_coords = data.get('drawing_coords')
+    default_coords = data.get('default_coords')
+    print("Drawing Coords", drawing_coords)
+    print("Default Coords", default_coords)
+    print(default_coords)
+    if (drawing_coords is None or len(data.get('drawing_coords')) == 0):
+        session['drawn_coordinates'] = default_coords
+    else:
+        session['drawn_coordinates'] = drawing_coords
     return 'Coordinates saved successfully.'
 
 @action('checklist')
@@ -295,7 +303,8 @@ def edit_checklist(checklist_id):
 @action('location')
 @action.uses('location.html', db, auth.user, url_signer, session)
 def location():
-    drawn_coordinates = session.get('drawn_coordinates', [])
+    drawn_coordinates = session.get('drawn_coordinates')
+    print('Location: ', drawn_coordinates)
     return dict(
         my_callback_url = URL('my_callback', signer=url_signer),
         get_bird_sightings_url = URL('get_bird_sightings'),
