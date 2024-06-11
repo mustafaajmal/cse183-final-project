@@ -25,11 +25,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 chartInstance: null,
 
                 drawn_coordinates: drawn_coordinates || [],
+                events_in_bounds: [],
+                species_in_bounds: []
             };
         },
         methods: {
+
             fetchRegionData() {
                 // Dummy data is already set in the data properties
+                let p1 = drawn_coordinates[0];
+                let p2 = drawn_coordinates[1];
+                
+                let north = Math.max(p1['lat'], p2['lat']);
+                let south = Math.min(p1['lat'], p2['lat']);
+
+                let west = Math.min(p1['lng'], p2['lng']);
+                let east = Math.max(p1['lng'], p2['lng']);
+
+                map_bounds = {
+                    north: north,
+                    south: south,
+                    west: west,
+                    east: east
+                }
+
+                console.log(north, south, east, west);
+
+                axios.post(get_bird_sightings_url, map_bounds)
+                    .then(response => {
+                        this.events_in_bounds = response.data.sightings;
+                        console.log("Response.data.sightings:", response.data.sightings);
+                        this.species_in_bounds = [...new Set(this.events_in_bounds.map(event => event.species))];
+                        this.species_in_bounds.sort((a, b) => a.localeCompare(b));
+                        
+                    })
+                    .catch(error => console.error('Error fetching bird sightings', error))
+                
+                
             },
             fetchSpeciesData() {
                 // Dummy data for the graph
@@ -91,6 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.fetchSpeciesData();
             }
         },
+
         watch: {
             selectedRegion(newVal, oldVal) {
                 if (newVal !== oldVal) {
@@ -103,6 +136,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         },
+
+        computed: {
+            eventsList: function() {
+                return this.events_in_bounds;
+            }
+        },
+        
         mounted() {
             // Fetch region data on mount
             this.fetchRegionData();

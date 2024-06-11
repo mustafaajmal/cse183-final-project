@@ -2,11 +2,11 @@ function get_sightings(rectangle_coordinates){
     let p1 = rectangle_coordinates[0];
     let p2 = rectangle_coordinates[1];
     
-    let north = max(p1[0], p2[0]);
-    let south = min(p1[0], p2[0]);
+    let north = max(p1['lat'], p2['lat']);
+    let south = min(p1['lat'], p2['lat']);
 
-    let west = min(p1[1], p2[1]);
-    let east = max(p1[1], p2[1]);
+    let west = min(p1['lng'], p2['lng']);
+    let east = max(p1['lng'], p2['lng']);
 
     map_bounds = {
         north: north,

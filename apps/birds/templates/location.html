@@ -61,8 +61,8 @@
             <div class="species-list box">
                 <h3 class="subtitle">Species Observed</h3>
                 <ul>
-                    <li v-for="species in speciesData" :key="species.id" @click="selectSpecies(species.id)" :class="{ 'is-active': selectedSpecies === species.id }">
-                        {{ species.name }}
+                    <li v-for="species in eventsList" :key="species.id" @click="selectSpecies(species.id)" :class="{ 'is-active': selectedSpecies === species.id }">
+                        {{ species.species }}
                     </li>
                 </ul>
             </div>
@@ -89,6 +89,7 @@
 [[block page_scripts]]
 <script>
     let drawn_coordinates = JSON.parse('[[=XML(drawn_coordinates)]]');
+    let get_bird_sightings_url = "[[=XML(get_bird_sightings_url)]]";
 </script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
