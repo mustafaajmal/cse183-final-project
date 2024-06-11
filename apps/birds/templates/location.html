@@ -61,7 +61,7 @@
             <div class="species-list box">
                 <h3 class="subtitle">Species Observed</h3>
                 <ul>
-                    <li v-for="species in eventsList" :key="species.id" @click="selectSpecies(species.id)" :class="{ 'is-active': selectedSpecies === species.id }">
+                    <li v-for="species in eventsList" :key="species.species" @click="selectSpecies(species.species)" :class="{ 'is-active': selectedSpecies === species.species }">
                         {{ species.species }}
                     </li>
                 </ul>
@@ -69,8 +69,8 @@
             <div class="contributors-list box">
                 <h3 class="subtitle">Top Contributors</h3>
                 <ul>
-                    <li v-for="contributor in topContributors" :key="contributor.email">
-                        {{ contributor.name }} ({{ contributor.email }})
+                    <li v-for="(observer_id, count) in contributorsList" :key="observer_id">
+                        {{ observer_id }} ({{ count }})
                     </li>
                 </ul>
             </div>

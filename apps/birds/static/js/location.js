@@ -12,21 +12,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     { id: 4, name: 'Red-winged Blackbird', checklists: 7, sightings: 20 }
                 ],
                 graphData: [],
-                topContributors: [
-                    { name: 'John Doe', email: 'john@example.com' },
-                    { name: 'Jane Smith', email: 'jane@example.com' },
-                    { name: 'Richard Roe', email: 'richard@example.com' },
-                    { name: 'John Doe', email: 'john@example.com' },
-                    { name: 'Jane Smith', email: 'jane@example.com' },
-                    { name: 'Richard Roe', email: 'richard@example.com' }
-                ],
-                totalChecklists: 26,
-                totalSightings: 78,
+                topContributors: {},
+
+                totalChecklists: 0,
+                totalSightings: 0,
                 chartInstance: null,
 
                 drawn_coordinates: drawn_coordinates || [],
                 events_in_bounds: [],
-                species_in_bounds: []
+                species_in_bounds: [],
             };
         },
         methods: {
@@ -57,6 +51,27 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log("Response.data.sightings:", response.data.sightings);
                         this.species_in_bounds = [...new Set(this.events_in_bounds.map(event => event.species))];
                         this.species_in_bounds.sort((a, b) => a.localeCompare(b));
+
+                        // Loop through events in bounds, if observer id is new in dictionary, add it with intensity
+                        // Else add to existing observer
+
+                        for (let i = 0; i < this.events_in_bounds.length; i++){
+                            observer_id = this.events_in_bounds[i].obs_id;
+                            count = this.events_in_bounds[i].intensity;
+                            console.log("Observer Id", observer_id, "Count", count);
+                            if (this.topContributors.hasOwnProperty(observer_id)) {
+                                // If it exists, add the count to the existing value
+                                this.topContributors[observer_id] += count;
+                            } else {
+                                // If it does not exist, set the initial count
+                                this.topContributors[observer_id] = count;
+                            }
+                        }
+
+                        let sortedContributors = Object.entries(this.topContributors).sort((a, b) => b[1] - a[1]);
+                        this.topContributors = Object.fromEntries(sortedContributors);
+
+                        console.log("Top Contributors", this.topContributors);
                         
                     })
                     .catch(error => console.error('Error fetching bird sightings', error))
@@ -140,9 +155,13 @@ document.addEventListener('DOMContentLoaded', function() {
         computed: {
             eventsList: function() {
                 return this.events_in_bounds;
+            },
+
+            contributorsList: function() {
+                return this.topContributors;
             }
         },
-        
+
         mounted() {
             // Fetch region data on mount
             this.fetchRegionData();
