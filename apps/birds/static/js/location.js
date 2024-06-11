@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         for (let i = 0; i < this.events_in_bounds.length; i++){
                             observer_id = this.events_in_bounds[i].obs_id;
                             count = this.events_in_bounds[i].intensity;
-                            console.log("Observer Id", observer_id, "Count", count);
+                            // console.log("Observer Id", observer_id, "Count", count);
                             if (this.topContributors.hasOwnProperty(observer_id)) {
                                 // If it exists, add the count to the existing value
                                 this.topContributors[observer_id] += count;
@@ -80,31 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             fetchSpeciesData() {
                 // Dummy data for the graph
-                if (this.selectedSpecies === 1) {
-                    this.graphData = [
-                        { date: '2024-06-01', count: 5 },
-                        { date: '2024-06-02', count: 10 },
-                        { date: '2024-06-03', count: 7 }
-                    ];
-                } else if (this.selectedSpecies === 2) {
-                    this.graphData = [
-                        { date: '2024-06-01', count: 8 },
-                        { date: '2024-06-02', count: 12 },
-                        { date: '2024-06-03', count: 5 }
-                    ];
-                } else if (this.selectedSpecies === 3) {
-                    this.graphData = [
-                        { date: '2024-06-01', count: 6 },
-                        { date: '2024-06-02', count: 8 },
-                        { date: '2024-06-03', count: 4 }
-                    ];
-                } else if (this.selectedSpecies === 4) {
-                    this.graphData = [
-                        { date: '2024-06-01', count: 10 },
-                        { date: '2024-06-02', count: 5 },
-                        { date: '2024-06-03', count: 7 }
-                    ];
-                }
+                console.log("Selected Species", this.selectedSpecies);
                 this.drawGraph();
             },
             drawGraph() {
@@ -136,19 +112,6 @@ document.addEventListener('DOMContentLoaded', function() {
             selectSpecies(speciesId) {
                 this.selectedSpecies = speciesId;
                 this.fetchSpeciesData();
-            }
-        },
-
-        watch: {
-            selectedRegion(newVal, oldVal) {
-                if (newVal !== oldVal) {
-                    this.fetchRegionData();
-                }
-            },
-            selectedSpecies(newVal, oldVal) {
-                if (newVal !== oldVal) {
-                    this.fetchSpeciesData();
-                }
             }
         },
 
