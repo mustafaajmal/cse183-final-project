@@ -268,12 +268,15 @@ app.data = {
 
         map.whenReady(() => {
             this.getUserLocation();
-            this.loadHeatMap();
         });
 
         setTimeout(() => {
             map.invalidateSize();
         }, 100);
+
+        setTimeout(() => {
+            this.loadHeatMap();
+        }, 4000);
 
         this.map = map;
         document.addEventListener('click', this.hideTooltip);
