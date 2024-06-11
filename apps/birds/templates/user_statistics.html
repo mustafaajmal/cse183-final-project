@@ -27,17 +27,44 @@
   }
   
   ul {
-    list-style-type: disc; /* Show bullet points */
-    margin-left: 20px; /* Indent the list */
+    list-style-type: none; /* Remove default bullet points */
+    padding-left: 0; /* Remove default padding */
   }
 
   ul ul {
-    list-style-type: circle; /* Show different bullet points for nested lists */
-    margin-left: 20px; /* Indent the nested list */
+    padding-left: 0; /* Remove indent for nested list */
   }
 
   ul li {
-    margin-bottom: 5px; /* Add some spacing between list items */
+    margin-bottom: 10px; /* Add some spacing between list items */
+  }
+
+  .species-button {
+    margin-bottom: 5px;
+    display: inline-block;
+    width: 100%;
+    text-align: left;
+    padding: 0.5em 1em;
+  }
+
+  .date-list {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 10px; /* Space between buttons */
+    margin-top: 10px;
+  }
+
+  .date-button {
+    padding: 0.3em 0.8em;
+    font-size: 0.9em;
+    flex: 0 1 150px; /* Grow to fill available space, but not exceed 150px */
+    text-align: center; /* Center text in button */
+    margin: 5px; /* Additional margin for spacing */
+    box-sizing: border-box; /* Include padding and border in element's width and height */
+  }
+
+  .is-hidden {
+    display: none;
   }
 </style>
 
@@ -74,11 +101,17 @@
   <div class="columns is-multiline">
     <div class="column is-one-third" v-for="(name, index) in common_names" :key="name.COMMON_NAME">
       <ul>
-        <li @click="fetchObservationDates(name)">
-          {{ name.COMMON_NAME }}
-          <ul>
-            <li v-for="date in name.observation_dates" :key="date.OBSERVATION_DATE" @click="moveMapToObservation(name, date)">
-              {{ date.OBSERVATION_DATE }}
+        <li>
+          <!-- Main button for the species name with toggle functionality -->
+          <button class="button is-link is-light species-button" @click="toggleObservationDates(index)">
+            {{ name.COMMON_NAME }}
+          </button>
+          <ul :class="{'is-hidden': !name.isExpanded}" class="date-list">
+            <li v-for="date in name.observation_dates" :key="date.OBSERVATION_DATE">
+              <!-- Secondary button for the observation dates -->
+              <button class="button is-small is-info is-outlined date-button" @click="moveMapToObservation(name, date)">
+                {{ date.OBSERVATION_DATE }}
+              </button>
             </li>
           </ul>
         </li>
@@ -119,6 +152,37 @@
     }
 
     window.map = map; // Make map accessible globally
+  });
+
+  // Adding the toggle functionality to Vue.js data
+  new Vue({
+    el: '#statistics-app',
+    data: {
+      query: '',
+      common_names: [
+        { COMMON_NAME: 'White-crowned Sparrow', observation_dates: [
+          { OBSERVATION_DATE: '2021-02-01' },
+          { OBSERVATION_DATE: '2021-02-02' },
+          { OBSERVATION_DATE: '2021-02-03' },
+          { OBSERVATION_DATE: '2021-02-04' },
+          { OBSERVATION_DATE: '2021-02-05' },
+          { OBSERVATION_DATE: '2021-02-06' },
+          { OBSERVATION_DATE: '2021-02-07' },
+          { OBSERVATION_DATE: '2021-02-08' },
+          { OBSERVATION_DATE: '2021-02-09' },
+        ], isExpanded: false },
+        // Add your other bird data here with `isExpanded` property for toggle functionality
+      ]
+    },
+    methods: {
+      toggleObservationDates(index) {
+        this.common_names[index].isExpanded = !this.common_names[index].isExpanded;
+      },
+      moveMapToObservation(name, date) {
+        // Logic to move the map to the observation location
+        alert(`Move map to the location of ${name.COMMON_NAME} observed on ${date.OBSERVATION_DATE}`);
+      }
+    }
   });
 </script>
 [[end]]
