@@ -21,7 +21,7 @@ The path follows the bottlepy syntax.
 @action.uses(auth.user)       indicates that the action requires a logged in user
 @action.uses(auth)            indicates that the action requires the auth object
 
-session, db, T, auth, and tempates are examples of Fixtures.
+session, db, T, auth, and templates are examples of Fixtures.
 Warning: Fixtures MUST be declared with @action.uses({fixtures}) else your app will result in undefined behavior
 """
 
@@ -35,7 +35,6 @@ from .models import get_user_email
 import csv
 
 url_signer = URLSigner(session)
-drawn_coordinates = []
 
 @action('index')
 @action.uses('index.html', db, auth.user, url_signer)
@@ -48,6 +47,55 @@ def index():
         get_bird_sightings_url = URL('get_bird_sightings'),
         save_coords_url = URL('save_coords'),
     )
+
+@action('get_region_data', method=['POST'])
+@action.uses(db, auth.user)
+def get_region_data():
+    region_id = request.json.get('regionId')
+    # Dummy data
+    species_data = [
+        {'id': 1, 'name': 'Blue Jay', 'checklists': 5, 'sightings': 15},
+        {'id': 2, 'name': 'Carolina Wren', 'checklists': 8, 'sightings': 25},
+        {'id': 3, 'name': 'House Sparrow', 'checklists': 6, 'sightings': 18},
+        {'id': 4, 'name': 'Red-winged Blackbird', 'checklists': 7, 'sightings': 20}
+    ]
+    top_contributors = [
+        {'name': 'John Doe', 'email': 'john@example.com'},
+        {'name': 'Jane Smith', 'email': 'jane@example.com'},
+        {'name': 'Richard Roe', 'email': 'richard@example.com'}
+    ]
+    return dict(speciesData=species_data, topContributors=top_contributors, totalChecklists=26, totalSightings=78)
+
+@action('get_species_data', method=['POST'])
+@action.uses(db, auth.user)
+def get_species_data():
+    species_id = request.json.get('speciesId')
+    # Dummy data
+    if species_id == 1:
+        graph_data = [
+            {'date': '2024-06-01', 'count': 5},
+            {'date': '2024-06-02', 'count': 10},
+            {'date': '2024-06-03', 'count': 7}
+        ]
+    elif species_id == 2:
+        graph_data = [
+            {'date': '2024-06-01', 'count': 8},
+            {'date': '2024-06-02', 'count': 12},
+            {'date': '2024-06-03', 'count': 5}
+        ]
+    elif species_id == 3:
+        graph_data = [
+            {'date': '2024-06-01', 'count': 6},
+            {'date': '2024-06-02', 'count': 8},
+            {'date': '2024-06-03', 'count': 4}
+        ]
+    elif species_id == 4:
+        graph_data = [
+            {'date': '2024-06-01', 'count': 10},
+            {'date': '2024-06-02', 'count': 5},
+            {'date': '2024-06-03', 'count': 7}
+        ]
+    return dict(graphData=graph_data)
 
 @action('get_bird_sightings', method=['POST'])
 @action.uses(db, auth.user, url_signer)
@@ -64,18 +112,10 @@ def get_bird_sightings():
         (db.checklist.LONGITUDE >= west)
     ).select(db.checklist.SAMPLING_EVENT_IDENTIFIER)
 
-    # print("Events In Bounds: ", events_in_bounds[0])
-
     event_ids = [event.SAMPLING_EVENT_IDENTIFIER for event in events_in_bounds]
-
-    # print("Event Ids: ", event_ids[0])
-
     sightings = db(db.sightings.SAMPLING_EVENT_IDENTIFIER.belongs(event_ids)).select()
 
-    # print("Sightings: ", sightings[0])
-
     sightings_list = []
-
     for sighting in sightings:
         event_location = db(db.checklist.SAMPLING_EVENT_IDENTIFIER == sighting.SAMPLING_EVENT_IDENTIFIER).select().first()
         if event_location:
@@ -87,11 +127,9 @@ def get_bird_sightings():
                 'species': sighting.COMMON_NAME,
                 'lat': event_location.LATITUDE,
                 'lon': event_location.LONGITUDE,
-                'intensity': intensity # Check parsing errors if OBSERVATION_COUNT == 'X'
+                'intensity': intensity
             })
 
-    # print("Sightings List: ", sightings_list[0:2])
-    print("Loading Map...")
     return dict(sightings=sightings_list)
 
 @action('save_coords', method='POST')
@@ -99,7 +137,6 @@ def get_bird_sightings():
 def save_coords():
     data = request.json
     session['drawn_coordinates'] = data.get('drawing_coords')
-    print("Session Drawn Coordinates", session['drawn_coordinates'])
     return 'Coordinates saved successfully.'
 
 @action('checklist')
@@ -143,7 +180,6 @@ def update_sightings():
 
     return dict(total_sightings=total_sightings)
 
-
 @action('my_checklists')
 @action.uses('my_checklists.html', db, auth.user)
 def my_checklists():
@@ -182,13 +218,8 @@ def edit_checklist():
 @action.uses('location.html', db, auth.user, url_signer, session)
 def location():
     drawn_coordinates = session.get('drawn_coordinates', [])
-    print("Location Call - Drawn Coordinates: ", type(drawn_coordinates))
     return dict(
         my_callback_url = URL('my_callback', signer=url_signer),
-
-        # Richard's Note:
-        # These are the coordinates for the region that the user selects on the map
-        # They are of format: [{'lat': 0.0, 'lng': 0.0}, {lat: 0.0, lng: 0.0}, ..., etc.]
         drawn_coordinates = json.dumps(drawn_coordinates),
     )
 
@@ -205,10 +236,8 @@ def user_statistics():
 @action.uses(db, auth.user, url_signer)
 def get_user_statistics():
     query = (db.sightings.OBSERVATION_COUNT.regexp('^[0-9]+$')) & (db.sightings.OBSERVATION_COUNT.cast('integer') > 0)
-
     common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
-    print("user statistics contains all birds")
-    return dict(common_names = common_names)
+    return dict(common_names=common_names)
 
 @action('search', method=["POST"])
 @action.uses(db, auth.user, url_signer)
@@ -216,8 +245,6 @@ def search():
     data = request.json
     q = data.get("params", {}).get("q")
     option = data.get("params", {}).get("option")
-    print("query", q)
-    print("option", option)
     query = (db.sightings.OBSERVATION_COUNT.regexp('^[0-9]+$')) & (db.sightings.OBSERVATION_COUNT.cast('integer') > 0)
     if q:
         query &= (db.sightings.COMMON_NAME.contains(q))
@@ -229,9 +256,8 @@ def search():
         common_names = db(query).select(db.sightings.COMMON_NAME, orderby=db.checklist.OBSERVATION_DATE, distinct=True).as_list()
     else:
         common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
-    print("searched by query", q)
     return dict(common_names=common_names)
-    
+
 @action('observation_dates', method=["POST"])
 @action.uses(db, auth.user, url_signer)
 def observation_date():
@@ -240,23 +266,23 @@ def observation_date():
     observation_date = data.get("observation_date")
     if not common_name:
         return dict(observation_dates=[], most_recent_sighting=None)
-    
+
     query = (db.sightings.COMMON_NAME == common_name) & \
             (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.checklist.SAMPLING_EVENT_IDENTIFIER)
-    
+
     if observation_date:
         query &= (db.checklist.OBSERVATION_DATE == observation_date)
         most_recent_sighting = db(query).select(
-            db.checklist.LATITUDE, 
-            db.checklist.LONGITUDE, 
-            orderby=~db.checklist.OBSERVATION_DATE, 
+            db.checklist.LATITUDE,
+            db.checklist.LONGITUDE,
+            orderby=~db.checklist.OBSERVATION_DATE,
             limitby=(0, 1)
         ).first()
     else:
         most_recent_sighting = db(query).select(
-            db.checklist.LATITUDE, 
-            db.checklist.LONGITUDE, 
-            orderby=~db.checklist.OBSERVATION_DATE, 
+            db.checklist.LATITUDE,
+            db.checklist.LONGITUDE,
+            orderby=~db.checklist.OBSERVATION_DATE,
             limitby=(0, 1)
         ).first()
 
@@ -271,27 +297,22 @@ def observation_date():
     return dict(observation_dates=observation_dates, most_recent_sighting=most_recent_sighting)
 
 @action('my_callback')
-@action.uses() # Add here things like db, auth, etc.
+@action.uses(db, auth)
 def my_callback():
-    # The return value should be a dictionary that will be sent as JSON.
-
     if db(db.species).isempty():
         with open('species.csv', 'r') as f:
             reader = csv.reader(f)
             for row in reader:
-                species = db.species.insert(name=row[0])
+                db.species.insert(name=row[0])
     if db(db.sightings).isempty():
         with open('sightings.csv', 'r') as f:
             reader = csv.reader(f)
             for row in reader:
-                sightings = db.sightings.insert(name=row[0],
-                                                bird_count=row[1])
+                db.sightings.insert(name=row[0], bird_count=row[1])
     if db(db.checklist).isempty():
         with open('checklist.csv', 'r') as f:
             reader = csv.reader(f)
             for row in reader:
-                checklist = db.sightings.insert(name=row[0])
+                db.sightings.insert(name=row[0])
 
-    return dict(my_value=3, species = species, sightings = sightings, checklist = checklist)
-
-
+    return dict(my_value=3)

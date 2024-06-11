@@ -1,95 +1,105 @@
-"use strict";
-
-let app = Vue.createApp({
-    data() {
-        return {
-            regionData: [],
-            filteredData: [],
-            searchQuery: localStorage.getItem('region_search') || '',
-            searchActive: false,
-            selectedSpecies: null,
-            totalChecklists: 0,
-            totalSightings: 0,
-            topContributors: [],
-            chartInstance: null
-        };
-    },
-    methods: {
-        toggleSearch() {
-            this.searchActive = this.searchQuery.trim() !== '';
-            this.filteredData = this.searchActive ?
-                this.regionData.filter(entry =>
-                    entry.species.toLowerCase().startsWith(this.searchQuery.toLowerCase())
-                ) : this.regionData;
-            localStorage.setItem('region_search', this.searchQuery);
+document.addEventListener('DOMContentLoaded', function() {
+    const app = Vue.createApp({
+        data() {
+            return {
+                selectedRegion: 1, // Simulating a selected region
+                selectedSpecies: null,
+                speciesData: [
+                    { id: 1, name: 'Blue Jay', checklists: 5, sightings: 15 },
+                    { id: 2, name: 'Carolina Wren', checklists: 8, sightings: 25 },
+                    { id: 3, name: 'House Sparrow', checklists: 6, sightings: 18 },
+                    { id: 4, name: 'Red-winged Blackbird', checklists: 7, sightings: 20 }
+                ],
+                graphData: [],
+                topContributors: [
+                    { name: 'John Doe', email: 'john@example.com' },
+                    { name: 'Jane Smith', email: 'jane@example.com' },
+                    { name: 'Richard Roe', email: 'richard@example.com' }
+                ],
+                totalChecklists: 26,
+                totalSightings: 78,
+                chartInstance: null
+            };
         },
-        updateObservations(speciesId, newObservations) {
-            axios.post(update_observations_url, { species_id: speciesId, new_observations: newObservations })
-                .then(response => {
-                    const speciesIndex = this.regionData.findIndex(species => species.id === speciesId);
-                    if (speciesIndex !== -1) {
-                        this.regionData[speciesIndex].total_observations = response.data.total_observations;
-                    }
-                })
-                .catch(error => {
-                    console.error('There was an error updating the observations:', error);
-                });
-        },
-        handleKeyUp(event, species) {
-            if (event.key === 'Enter') {
-                this.updateObservations(species.id, species.new_observations);
-            }
-        },
-        incrementObservations(species) {
-            const newObservations = (species.new_observations || 0) + 1;
-            this.updateObservations(species.id, newObservations);
-        },
-        loadData() {
-            axios.get(load_region_data_url)
-                .then(response => {
-                    this.regionData = response.data.regionData.map(species => ({
-                        id: species.id,
-                        species: species.species,
-                        total_observations: species.total_observations || 0,
-                        new_observations: 0
-                    }));
-                    if (this.searchQuery.trim() !== '') {
-                        this.toggleSearch();
-                    }
-                })
-                .catch(error => {
-                    console.error('There was an error fetching the region data:', error);
-                });
-        },
-        fetchAndDisplaySpeciesData(speciesId) {
-            axios.get(`/api/species_data/${speciesId}`)
-                .then(response => {
-                    const speciesData = response.data;
-                    this.renderChart(speciesData.dates, speciesData.observations);
-                })
-                .catch(error => console.error('Error fetching species data:', error));
-        },
-        renderChart(dates, observations) {
-            const ctx = this.$refs.chartCanvas.getContext('2d');
-            if (this.chartInstance) {
-                this.chartInstance.destroy();
-            }
-            this.chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label: 'Observations Over Time',
-                        data: observations,
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
-                    }]
+        methods: {
+            fetchRegionData() {
+                // Dummy data is already set in the data properties
+            },
+            fetchSpeciesData() {
+                // Dummy data for the graph
+                if (this.selectedSpecies === 1) {
+                    this.graphData = [
+                        { date: '2024-06-01', count: 5 },
+                        { date: '2024-06-02', count: 10 },
+                        { date: '2024-06-03', count: 7 }
+                    ];
+                } else if (this.selectedSpecies === 2) {
+                    this.graphData = [
+                        { date: '2024-06-01', count: 8 },
+                        { date: '2024-06-02', count: 12 },
+                        { date: '2024-06-03', count: 5 }
+                    ];
+                } else if (this.selectedSpecies === 3) {
+                    this.graphData = [
+                        { date: '2024-06-01', count: 6 },
+                        { date: '2024-06-02', count: 8 },
+                        { date: '2024-06-03', count: 4 }
+                    ];
+                } else if (this.selectedSpecies === 4) {
+                    this.graphData = [
+                        { date: '2024-06-01', count: 10 },
+                        { date: '2024-06-02', count: 5 },
+                        { date: '2024-06-03', count: 7 }
+                    ];
                 }
-            });
+                this.drawGraph();
+            },
+            drawGraph() {
+                const ctx = this.$refs.speciesGraph.getContext('2d');
+                if (this.chartInstance) {
+                    this.chartInstance.destroy();
+                }
+                this.chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: this.graphData.map(data => data.date),
+                        datasets: [{
+                            label: 'Number of Birds Seen',
+                            data: this.graphData.map(data => data.count),
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            },
+            selectSpecies(speciesId) {
+                this.selectedSpecies = speciesId;
+                this.fetchSpeciesData();
+            }
+        },
+        watch: {
+            selectedRegion(newVal, oldVal) {
+                if (newVal !== oldVal) {
+                    this.fetchRegionData();
+                }
+            },
+            selectedSpecies(newVal, oldVal) {
+                if (newVal !== oldVal) {
+                    this.fetchSpeciesData();
+                }
+            }
+        },
+        mounted() {
+            // Fetch region data on mount
+            this.fetchRegionData();
         }
-    },
-    mounted() {
-        console.log("Vue mounted successfully.");
-        this.loadData();
-    }
-}).mount("#location-app");
+    }).mount('#app');
+});

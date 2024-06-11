@@ -2,28 +2,74 @@
 
 <style>
 [v-cloak] {
-     display: none;
+    display: none;
+}
+.chart-container {
+    width: 100%;
+    height: 750px;
+    position: relative;
+}
+.species-list li {
+    cursor: pointer;
+    padding: 10px;
+}
+.species-list li.is-active {
+    background-color: #3273dc;
+    color: white;
 }
 </style>
 
-
 <div class="section" id="app" v-cloak>
-  <!-- Put here your Vue.js template -->
-  <h1 class="title"><i class="fa-solid fa-cube"></i> Location Page</h1>
-  <!-- Correctly access lat and lng properties of each coordinate object -->
-  <h2 class="description">Coordinates of Drawn Polygon by User on Map: </h2>
-  <p v-for="(coordinates, index) in drawn_coordinates" :key="index">
-    Latitude: {{ coordinates.lat }}, Longitude: {{ coordinates.lng }}
-  </p>
+    <h1 class="title"><i class="fa-solid fa-cube"></i> Region Information</h1>
+    
+    <!-- Summary Information -->
+    <div class="columns is-multiline">
+        <div class="column is-half has-text-centered">
+            <h2 class="subtitle"><i class="fas fa-list"></i> Checklists</h2>
+            <p class="title">{{ totalChecklists }}</p>
+        </div>
+        <div class="column is-half has-text-centered">
+            <h2 class="subtitle"><i class="fas fa-eye"></i> Total Sightings</h2>
+            <p class="title">{{ totalSightings }}</p>
+        </div>
+    </div>
 
+    <!-- Species List and Graph -->
+    <div class="columns">
+        <div class="column is-one-quarter">
+            <div class="species-list box">
+                <h3 class="subtitle">Species Observed</h3>
+                <ul>
+                    <li v-for="species in speciesData" :key="species.id" @click="selectSpecies(species.id)" :class="{ 'is-active': selectedSpecies === species.id }">
+                        {{ species.name }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="column is-three-quarters">
+            <!-- Graph container -->
+            <div class="box">
+                <div class="chart-container">
+                    <canvas ref="speciesGraph"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Contributors List -->
+    <div class="box">
+        <h3 class="subtitle">Top Contributors</h3>
+        <ul>
+            <li v-for="contributor in topContributors" :key="contributor.email">
+                {{ contributor.name }} ({{ contributor.email }})
+            </li>
+        </ul>
+    </div>
 </div>
 
-
 [[block page_scripts]]
-<!-- Loads the index-specific js for Vue -->
-<script>
-  let my_callback_url = "[[=XML(my_callback_url)]]";
-  let drawn_coordinates = JSON.parse('[[=XML(drawn_coordinates)]]');
-</script>
-<script src="js/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/location.js"></script>
 [[end]]
