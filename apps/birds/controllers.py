@@ -210,12 +210,15 @@ def load_checklists():
     return dict(checklists=checklists)
 
 @action('add_checklist')
-@action.uses('add_checklist.html', db, auth.user, url_signer)
+@action.uses('add_checklist.html', db, auth.user, url_signer, session)
 def add_checklist():
+    drawn_coordinates = session.get('drawn_coordinates')
+    print("Add checklist", drawn_coordinates)
     if not auth.current_user:
         redirect(URL('auth/login'))
     return dict(
-        submit_checklist_url=URL('submit_checklist')
+        submit_checklist_url=URL('submit_checklist'),
+        drawn_coordinates = json.dumps(drawn_coordinates)
     )
 
 @action('submit_checklist', method='POST')
