@@ -280,7 +280,7 @@ app.data = {
         setTimeout(() => {
             map.invalidateSize();
         }, 100);
-
+        this.loading = true;
         setTimeout(() => {
             this.loadHeatMap();
         }, 10000);
