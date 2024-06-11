@@ -324,17 +324,24 @@ def search():
     data = request.json
     q = data.get("params", {}).get("q")
     option = data.get("params", {}).get("option")
-    query = (db.sightings.OBSERVATION_COUNT.regexp('^[0-9]+$')) & (db.sightings.OBSERVATION_COUNT.cast('integer') > 0)
+
+    # Base query
+    query = (db.sightings.OBSERVATION_COUNT > 0)
+
+    # Add search condition
     if q:
         query &= (db.sightings.COMMON_NAME.contains(q))
-    if option == "recent":
+
+    # Add option condition
+    if option in ["recent", "old"]:
         query &= (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.checklist.SAMPLING_EVENT_IDENTIFIER)
-        common_names = db(query).select(db.sightings.COMMON_NAME, orderby=~db.checklist.OBSERVATION_DATE, distinct=True).as_list()
-    elif option == "old":
-        query &= (db.sightings.SAMPLING_EVENT_IDENTIFIER == db.checklist.SAMPLING_EVENT_IDENTIFIER)
-        common_names = db(query).select(db.sightings.COMMON_NAME, orderby=db.checklist.OBSERVATION_DATE, distinct=True).as_list()
+        if option == "recent":
+            common_names = db(query).select(db.sightings.COMMON_NAME, orderby=~db.checklist.OBSERVATION_DATE, distinct=True).as_list()
+        else:  # option == "old"
+            common_names = db(query).select(db.sightings.COMMON_NAME, orderby=db.checklist.OBSERVATION_DATE, distinct=True).as_list()
     else:
         common_names = db(query).select(db.sightings.COMMON_NAME, distinct=True).as_list()
+
     return dict(common_names=common_names)
 
 @action('observation_dates', method=["POST"])
