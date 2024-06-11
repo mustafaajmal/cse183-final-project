@@ -8,18 +8,27 @@
 
 <div class="section" id="app" v-cloak>
   <h1 class="title"><i class="fa-solid fa-list"></i> My Checklists</h1>
+  <div class="control">
+    <a href="[[=URL('add_checklist')]]" class="button is-info">Add Checklist</a>
+  </div>
   <table class="table">
     <thead>
       <tr>
-        <th>Date</th>
-        <th>Data</th>
+        <th>Species Name</th>
+        <th>Latitude</th>
+        <th>Longitude</th>
+        <th>Date Observed</th>
+        <th>Duration Observed</th>
         <th>Actions</th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="(checklist, index) in checklists" :key="checklist.id">
-        <td>{{ checklist.date }}</td>
-        <td><pre>{{ checklist.data }}</pre></td>
+        <td>{{ checklist.SAMPLING_EVENT_IDENTIFIER }}</td>
+        <td>{{ checklist.LATITUDE }}</td>
+        <td>{{ checklist.LONGITUDE }}</td>
+        <td>{{ checklist.OBSERVATION_DATE }}</td>
+        <td>{{ checklist.DURATION_MINUTES }}</td>
         <td>
           <button @click="editChecklist(index)">Edit</button>
           <button @click="deleteChecklist(checklist.id)">Delete</button>

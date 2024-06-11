@@ -197,8 +197,56 @@ def my_checklists():
 @action.uses(db, auth.user)
 def load_checklists():
     user_email = get_user_email()
-    checklists = db(db.checklist_table.user_email == user_email).select().as_list()
+    # Query the 'checklist' table based on the current user's email
+    checklists = db(db.checklist.OBSERVER_ID == user_email).select().as_list()
     return dict(checklists=checklists)
+
+@action('add_checklist')
+@action.uses('add_checklist.html', db, auth.user, url_signer)
+def add_checklist():
+    if not auth.current_user:
+        redirect(URL('auth/login'))
+    return dict(
+        submit_checklist_url=URL('submit_checklist')
+    )
+
+@action('submit_checklist', method='POST')
+@action.uses(db, auth.user, url_signer)
+def submit_checklist():
+    if not auth.current_user:
+        redirect(URL('auth/login'))
+
+    # Extract data from the request
+    species_name = request.forms.get('species_name')
+    latitude = float(request.forms.get('latitude'))
+    longitude = float(request.forms.get('longitude'))
+    observation_date = request.forms.get('observation_date')
+    time_observations_started = request.forms.get('time_observations_started')
+    duration_minutes = float(request.forms.get('duration_minutes'))
+
+    # Get the current user's email for OBSERVER_ID
+    observer_id = get_user_email()
+
+    # Query the sightings table to find the SAMPLING_EVENT_IDENTIFIER
+    sighting = db(db.sightings.COMMON_NAME == species_name).select().first()
+    if not sighting:
+        return dict(message="Sighting for the given species not found")
+
+    sampling_event_identifier = sighting.SAMPLING_EVENT_IDENTIFIER
+
+    # Insert data into the checklist table
+    db.checklist.insert(
+        SAMPLING_EVENT_IDENTIFIER=sampling_event_identifier,
+        LATITUDE=latitude,
+        LONGITUDE=longitude,
+        OBSERVATION_DATE=observation_date,
+        TIME_OBSERVATIONS_STARTED=time_observations_started,
+        OBSERVER_ID=observer_id,
+        DURATION_MINUTES=duration_minutes
+    )
+
+    # Redirect to the my_checklist page
+    redirect(URL('my_checklists'))
 
 @action('delete_checklist/<checklist_id:int>', method='DELETE')
 @action.uses(db, auth.user)
