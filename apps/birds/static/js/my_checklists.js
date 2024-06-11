@@ -18,26 +18,8 @@ app.data = {
                 console.error('Error loading checklists:', error);
             });
         },
-        editChecklist: function(index) {
-            let self = this;
-            let checklist = self.checklists[index];
-            let newData = prompt("Edit Checklist Data:", JSON.stringify(checklist.data));
-            if (newData) {
-                try {
-                    let parsedData = JSON.parse(newData);
-                    axios.post(edit_checklist_url, {
-                        id: checklist.id,
-                        data: parsedData
-                    }).then(response => {
-                        alert(response.data.message);
-                        self.checklists[index].data = parsedData;
-                    }).catch(error => {
-                        console.error('Error editing checklist:', error);
-                    });
-                } catch (e) {
-                    alert("Invalid JSON format.");
-                }
-            }
+        editChecklist: function(checklist_id) {
+            window.location.href = edit_checklist_url + '/' + checklist_id;
         },
         deleteChecklist: function(checklist_id) {
             let self = this;

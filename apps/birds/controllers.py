@@ -197,26 +197,100 @@ def my_checklists():
 @action.uses(db, auth.user)
 def load_checklists():
     user_email = get_user_email()
-    checklists = db(db.checklist_table.user_email == user_email).select().as_list()
+    # Query the 'checklist' table based on the current user's email
+    checklists = db(db.checklist.OBSERVER_ID == user_email).select().as_list()
     return dict(checklists=checklists)
 
-@action('delete_checklist/<checklist_id:int>', method='DELETE')
-@action.uses(db, auth.user)
-def delete_checklist(checklist_id=None):
-    if checklist_id:
-        db(db.checklist_table.id == checklist_id).delete()
-        return dict(message="Checklist deleted")
-    return dict(message="Checklist not deleted")
+@action('add_checklist')
+@action.uses('add_checklist.html', db, auth.user, url_signer)
+def add_checklist():
+    if not auth.current_user:
+        redirect(URL('auth/login'))
+    return dict(
+        submit_checklist_url=URL('submit_checklist')
+    )
 
-@action('edit_checklist', method='POST')
-@action.uses(db, auth.user)
-def edit_checklist():
-    checklist_id = request.json.get('id')
-    data = request.json.get('data')
-    if checklist_id:
-        db(db.checklist_table.id == checklist_id).update(data=data)
-        return dict(message="Checklist updated")
-    return dict(message="Checklist not updated")
+@action('submit_checklist', method='POST')
+@action.uses(db, auth.user, url_signer)
+def submit_checklist():
+    if not auth.current_user:
+        redirect(URL('auth/login'))
+
+    # Extract data from the request
+    species_name = request.forms.get('species_name')
+    latitude = float(request.forms.get('latitude'))
+    longitude = float(request.forms.get('longitude'))
+    observation_date = request.forms.get('observation_date')
+    time_observations_started = request.forms.get('time_observations_started')
+    duration_minutes = float(request.forms.get('duration_minutes'))
+
+    # Get the current user's email for OBSERVER_ID
+    observer_id = get_user_email()
+
+    # Query the sightings table to find the SAMPLING_EVENT_IDENTIFIER
+    sighting = db(db.sightings.COMMON_NAME == species_name).select().first()
+    if not sighting:
+        return dict(message="Sighting for the given species not found")
+
+    sampling_event_identifier = sighting.SAMPLING_EVENT_IDENTIFIER
+
+    # Insert data into the checklist table
+    db.checklist.insert(
+        SAMPLING_EVENT_IDENTIFIER=sampling_event_identifier,
+        LATITUDE=latitude,
+        LONGITUDE=longitude,
+        OBSERVATION_DATE=observation_date,
+        TIME_OBSERVATIONS_STARTED=time_observations_started,
+        OBSERVER_ID=observer_id,
+        DURATION_MINUTES=duration_minutes
+    )
+
+    # Redirect to the my_checklist page
+    redirect(URL('my_checklists'))
+
+@action('delete_checklist/<checklist_id:int>', method='DELETE')
+@action.uses(db, auth.user, url_signer)
+def delete_checklist(checklist_id):
+    # Check if the checklist exists and belongs to the current user
+    user_email = get_user_email()
+    checklist = db(db.checklist.id == checklist_id).select().first()
+    
+    if not checklist:
+        return dict(message="Checklist not found")
+    
+    if checklist.OBSERVER_ID != user_email:
+        return dict(message="Not authorized to delete this checklist")
+
+    # Delete the checklist
+    db(db.checklist.id == checklist_id).delete()
+    
+    return dict(message="Checklist deleted successfully")
+
+@action('edit_checklist/<checklist_id:int>', method=['GET', 'POST'])
+@action.uses(db, auth.user, 'edit_checklist.html')
+def edit_checklist(checklist_id):
+    checklist = db.checklist[checklist_id]
+    if not checklist:
+        redirect(URL('my_checklists'))
+    
+    if request.method == 'GET':
+        return dict(
+            checklist=checklist,
+            checklist_id=checklist_id
+        )
+    
+    if request.method == 'POST':
+        checklist.update_record(
+            SAMPLING_EVENT_IDENTIFIER=request.forms.get('sampling_event_identifier'),
+            LATITUDE=float(request.forms.get('latitude')),
+            LONGITUDE=float(request.forms.get('longitude')),
+            OBSERVATION_DATE=request.forms.get('observation_date'),
+            TIME_OBSERVATIONS_STARTED=request.forms.get('time_observations_started'),
+            OBSERVER_ID=get_user_email(),
+            DURATION_MINUTES=float(request.forms.get('duration_minutes'))
+        )
+        redirect(URL('my_checklists'))
+
 
 @action('location')
 @action.uses('location.html', db, auth.user, url_signer, session)
