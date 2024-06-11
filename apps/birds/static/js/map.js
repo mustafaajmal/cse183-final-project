@@ -72,11 +72,18 @@ app.data = {
         mapDblClickListener: function(e) {
             // Handle double click
             if (this.drawing_coords.length === 2) {
-                alert("CANNOT ADD MORE POINTS");
+                alert("CANNOT ADD MORE POINTS. PLEASE CLEAR MAP");
             } else {
                 this.drawing_coords.push(e.latlng);
                 console.log(this.drawing_coords);
                 this.drawPoint(e.latlng);
+                axios.post(save_coords_url, {drawing_coords: this.drawing_coords, default_coords: this.map_bounds})
+                .then(response => {
+                    console.log('Coordinates saved successfully.');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
             }
         },
 
@@ -84,6 +91,7 @@ app.data = {
         drawPoint: function(e) {
             let point = L.circleMarker(e, { radius: 5, color: 'red' }).addTo(toRaw(this.map));
             this.points.push(point);
+            
         },
 
         // Connecting points together and building largest polygon
@@ -96,14 +104,6 @@ app.data = {
 
             let polygon = L.rectangle(this.drawing_coords).addTo(toRaw(this.map));
             this.polygons.push(polygon);
-
-            axios.post(save_coords_url, {drawing_coords: this.drawing_coords})
-                .then(response => {
-                    console.log('Coordinates saved successfully.');
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
         },
 
         // Clears points list and clears polygon
@@ -259,7 +259,14 @@ app.data = {
         map.on('click', this.mapClickListener);
         map.on('dblclick', this.mapDblClickListener);
         map.on('moveend', function() {
-            this.map_bounds = map.getBounds();
+            this.map_bounds = [{'lat': map.getBounds().getNorth(), 'lng':map.getBounds().getEast()}, {'lat':map.getBounds().getSouth(), 'lng':map.getBounds().getWest()}];
+            axios.post(save_coords_url, {drawing_coords: this.drawing_coords, default_coords: this.map_bounds})
+                .then(response => {
+                    console.log('Coordinates saved successfully.');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
             console.log(" North: " + map.getBounds().getNorth() + " South: " + map.getBounds().getSouth() + " East: " + map.getBounds().getEast() + " West: " + map.getBounds().getWest())
             
         });

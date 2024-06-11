@@ -124,7 +124,7 @@
                 <div class="box">
                     <label class="label">Map Options</label>
                     <div class="field">
-                        <p class="description">Double-Click on the Map to select two points of your rectangular region.</p>
+                        <p class="description">To submit a checklist, place a singular point down on the map by double clicking. To create a rectangular region, place two points down and click Create Region.</p>
                         <div class="control mt-3">
                             <button id="create-region" class="button is-success" @click="drawPolygon">Create Region</button>
                         </div>
@@ -142,13 +142,13 @@
                     </div>
                     <div class="field">
                         <div class="control">
-                          <a href="[[=URL('checklist')]]" class="button is-link">Enter Checklist</a>
+                          <a href="[[=URL('add_checklist')]]" class="button is-link">Enter Checklist</a>
                           <span class="info-icon" @click="showToolTip($event, 'checklist-info')">
                               <i class="bi bi-info-circle"></i>
                           </span>
                         </div>
                         <div id="checklist-info" class="tooltip-content" v-if="tooltipVisible['checklist-info']">
-                          Create a region on the map and then click button to create a checklist for this region/location!
+                          Drop a single pointer on the map and then click button to create a checklist for this region/location!
                         </div>
                     </div>
                     
