@@ -1,3 +1,11 @@
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const app = Vue.createApp({
         data() {
@@ -81,34 +89,60 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchSpeciesData() {
                 // Dummy data for the graph
                 console.log("Selected Species", this.selectedSpecies);
-                this.drawGraph();
-            },
-            drawGraph() {
-                const ctx = this.$refs.speciesGraph.getContext('2d');
-                if (this.chartInstance) {
-                    this.chartInstance.destroy();
-                }
-                this.chartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: this.graphData.map(data => data.date),
-                        datasets: [{
-                            label: 'Number of Birds Seen',
-                            data: this.graphData.map(data => data.count),
-                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
+                for (let i = 0; i < this.events_in_bounds.length; i++){
+                    species = this.events_in_bounds[i].species;
+                    date = this.events_in_bounds[i].date;
+                    count = this.events_in_bounds[i].intensity;
+                    if (species === this.selectedSpecies){
+                        if (this.graphData.hasOwnProperty(date)){
+                            this.graphData[date] += count;
+                        } else {
+                            this.graphData[date] = count;
                         }
                     }
+                }
+                console.log(this.graphData);
+                this.debouncedDrawGraph();
+            },
+            drawGraph() {
+                // Transform the graphData from object to array format
+                const transformedData = Object.keys(this.graphData).map(date => ({
+                    date: date,
+                    count: this.graphData[date]
+                })).sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+                // Extract labels and data for the chart
+                const labels = transformedData.map(data => data.date);
+                const data = transformedData.map(data => data.count);
+            
+                this.$nextTick(() => {
+                    const ctx = this.$refs.speciesGraph.getContext('2d');
+                    if (this.chartInstance) {
+                        this.chartInstance.destroy();
+                    }
+                    this.chartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Number of Birds Seen',
+                                data: data,
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
                 });
             },
+            
             selectSpecies(speciesId) {
                 this.selectedSpecies = speciesId;
                 this.fetchSpeciesData();
@@ -128,6 +162,10 @@ document.addEventListener('DOMContentLoaded', function() {
         mounted() {
             // Fetch region data on mount
             this.fetchRegionData();
+        },
+
+        created() {
+            this.debouncedDrawGraph = debounce(this.drawGraph, 300);
         }
     }).mount('#app');
 });
