@@ -127,6 +127,8 @@ def get_bird_sightings():
                 'species': sighting.COMMON_NAME,
                 'lat': event_location.LATITUDE,
                 'lon': event_location.LONGITUDE,
+                'obs_id': event_location.OBSERVER_ID,
+                'date': event_location.OBSERVATION_DATE,
                 'intensity': intensity
             })
 
@@ -140,7 +142,7 @@ def save_coords():
     return 'Coordinates saved successfully.'
 
 @action('checklist')
-@action.uses('checklist.html', db, auth, url_signer)
+@action.uses('checklist.html', db, auth.user, url_signer)
 def checklist():
     if not auth.current_user:
         redirect(URL('auth/login'))
@@ -172,7 +174,7 @@ def update_sightings():
     sightings = db(db.sightings.COMMON_NAME == common_name).select().first()
 
     if sightings:
-        sightings.update_record(OBSERVATION_COUNT=sightings.OBSERVATION_COUNT + new_sightings)
+        sightings.update_record(OBSERVATION_COUNT=str(int(sightings.OBSERVATION_COUNT) + new_sightings))
         total_sightings = sightings.OBSERVATION_COUNT
     else:
         total_sightings = new_sightings
@@ -181,12 +183,14 @@ def update_sightings():
     return dict(total_sightings=total_sightings)
 
 @action('my_checklists')
-@action.uses('my_checklists.html', db, auth.user)
+@action.uses('my_checklists.html', db, auth.user, session)
 def my_checklists():
+    drawn_coordinates = session.get('drawn_coordinates', [])
     return dict(
         load_checklists_url=URL('load_checklists'),
         delete_checklist_url=URL('delete_checklist'),
-        edit_checklist_url=URL('edit_checklist')
+        edit_checklist_url=URL('edit_checklist'),
+        drawn_coordinates = json.dumps(drawn_coordinates),
     )
 
 @action('load_checklists')

@@ -6,6 +6,7 @@ app.data = {
     data: function() {
         return {
             checklists: [],
+            drawn_coordinates: drawn_coordinates || []
         };
     },
     methods: {
@@ -51,6 +52,7 @@ app.data = {
     },
     mounted() {
         this.loadChecklists();
+        console.log(drawn_coordinates);
     }
 };
 

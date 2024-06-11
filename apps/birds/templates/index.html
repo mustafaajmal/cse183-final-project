@@ -73,13 +73,13 @@
     color: #fff;
     padding: 8px;
     border-radius: 4px;
-    z-index: 1000;
     max-width: 200px;
+    z-index: 1000;
     font-size: 0.9em;
     opacity: 0.9;
     display: none; /* Hidden by default */
     white-space: normal; /* Allow text wrapping */
-
+    left: calc(100% + 10px); /* Position the tooltip to the right of the icon */
 }
 
 .tooltip-content::after {
@@ -124,32 +124,32 @@
                 <div class="box">
                     <label class="label">Map Options</label>
                     <div class="field">
-                        <p class="description">Double-Click on the Map to select the boundaries of your region.</p>
+                        <p class="description">Double-Click on the Map to select two points of your rectangular region.</p>
                         <div class="control mt-3">
                             <button id="create-region" class="button is-success" @click="drawPolygon">Create Region</button>
                         </div>
                     </div>
                     <div class="field">
                       <div class="control">
-                        <a href="[[=URL('location')]]" class="button is-primary">Location Information</a>
+                        <a href="[[=URL('location')]]" class="button is-primary">Region/Location Information</a>
                         <span class="info-icon" @click="showToolTip($event, 'region-info')">
                             <i class="bi bi-info-circle"></i>
                           </span>
                       </div>
                       <div id="region-info" class="tooltip-content" v-if="tooltipVisible['region-info']">
-                        Create a region on the map and then click button to get some interesting statistics about the region!
+                        Create a region on the map and then click Region/Location information to get some interesting statistics about the region!
                       </div>
                     </div>
                     <div class="field">
-                      <div class="control">
-                        <a href="[[=URL('checklist')]]" class="button is-link">Enter Checklist</a>
-                        <span class="info-icon" @click="showToolTip($event, 'checklist-info')">
-                            <i class="bi bi-info-circle"></i>
-                        </span>
-                      </div>
-                      <div id="checklist-info" class="tooltip-content" v-if="tooltipVisible['checklist-info']">
-                        Create a region on the map and then click button to create a checklist for this region/location!
-                      </div>
+                        <div class="control">
+                          <a href="[[=URL('my_checklists')]]" class="button is-link">Enter Checklist</a>
+                          <span class="info-icon" @click="showToolTip($event, 'checklist-info')">
+                              <i class="bi bi-info-circle"></i>
+                          </span>
+                        </div>
+                        <div id="checklist-info" class="tooltip-content" v-if="tooltipVisible['checklist-info']">
+                          Create a region on the map and then click button to create a checklist for this region/location!
+                        </div>
                     </div>
                     
                     <div class="field">

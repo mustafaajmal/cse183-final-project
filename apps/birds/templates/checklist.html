@@ -8,6 +8,7 @@
 
 <div class="section" id="app" v-cloak>
   <h1 class="title"><i class="fa-solid fa-cube"></i> Checklist Page</h1>
+  <a href="[[=URL('my_checklists')]]">My Checklist</a>
   <input class="input" type="text" v-model="query" @keyup="search" placeholder="Search species">
   
   <table class="table is-fullwidth">
@@ -48,7 +49,7 @@
 [[block page_scripts]]
 <script>
   const checklist_data_url = "[[=URL('checklist_data')]]";
-  const my_checklist_url = "[[=URL('my_checklist')]]";
+  const my_checklist_url = "[[=URL('my_checklists')]]";
   const update_sightings_url = "[[=URL('update_sightings')]]";
 </script>
 <script src="js/checklist.js"></script>

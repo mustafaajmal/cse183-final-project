@@ -22,7 +22,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 ],
                 totalChecklists: 26,
                 totalSightings: 78,
-                chartInstance: null
+                chartInstance: null,
+
+                drawn_coordinates: drawn_coordinates || [],
             };
         },
         methods: {

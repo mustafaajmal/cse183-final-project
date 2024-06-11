@@ -46,7 +46,6 @@ app.data = {
         setPosition: function(position) {
             this.user_location = [position.coords.latitude, position.coords.longitude];
             this.map.setView(this.user_location, 15);
-            this.map.on('load', this.loadHeatMap);
             this.map.on('moveend', this.loadHeatMap);
         },
 
@@ -72,9 +71,13 @@ app.data = {
         // When user double clicks, drawn a point and store it to this.drawing_coords
         mapDblClickListener: function(e) {
             // Handle double click
-            this.drawing_coords.push(e.latlng);
-            console.log(this.drawing_coords);
-            this.drawPoint(e.latlng);
+            if (this.drawing_coords.length === 2) {
+                alert("CANNOT ADD MORE POINTS");
+            } else {
+                this.drawing_coords.push(e.latlng);
+                console.log(this.drawing_coords);
+                this.drawPoint(e.latlng);
+            }
         },
 
         // Drawing the point on the map
@@ -84,15 +87,14 @@ app.data = {
         },
 
         // Connecting points together and building largest polygon
-        // Uses calculateConvexHull() to determine ordering for largest polygon
         drawPolygon: function() {
-            const convexHull = calculateConvexHull(this.drawing_coords);
+            // const convexHull = calculateConvexHull(this.drawing_coords);
             this.polygons.forEach(polygon => {
                 this.map.removeLayer(polygon);
             });
             this.polygons = [];
 
-            let polygon = L.polygon(convexHull).addTo(toRaw(this.map));
+            let polygon = L.rectangle(this.drawing_coords).addTo(toRaw(this.map));
             this.polygons.push(polygon);
 
             axios.post(save_coords_url, {drawing_coords: this.drawing_coords})
