@@ -4,6 +4,21 @@
   [v-cloak] {
     display: none;
   }
+
+  /* New styles */
+  .search-container {
+    margin-bottom: 20px;
+  }
+
+  .search-input {
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 10px;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
 </style>
 
 <div class="section" id="app" v-cloak>
@@ -16,41 +31,63 @@
     </div>
   </div>
 
-  <input class="input" type="text" v-model="query" @keyup="search" placeholder="Search species">
-  
-  <table class="table is-fullwidth">
-    <thead>
-        <tr>
-            <th style="width: 40%;">Species</th>
-            <th style="width: 30%;">Number of Sightings</th>
-            <th style="width: 30%;">Add Sightings Count</th>
-        </tr>
-    </thead>
-    <tbody>
-        <template v-for="(species, index) in search_active ? search : checklist_data" :key="index">
-            <tr class="species-row">
-                <td style="width: 40%;">{{ species.common_name }}</td>
-                <td style="width: 30%;">{{ species.total_sightings }}</td>
-                <td style="width: 30%;">
-                    <!-- Search Bar -->
-                    <div class="field has-addons is-pulled-right">
-                        <p class="control" style="margin-right: 5px;">
-                            <input type="number" class="input" v-model.number="species.new_sightings" @keyup.enter="handleKeyUp($event, species)">
-                        </p>
-                        <!-- Increment Button -->
-                        <p class="control">
-                            <button class="button is-success" @click="incrementSightings(species)">
-                                +1
-                            </button>
-                        </p>
-                    </div>
-                </td>
-            </tr>
-        </template>
-    </tbody>
-  </table>
+  <!-- Search Input -->
+  <div class="search-container">
+    <input class="input search-input" type="text" v-model="query" @keyup="filterSpecies" placeholder="Search species">
+  </div>
 
-  <button class="button is-primary" @click="submitChecklist">Submit</button>
+  <!-- Table Container -->
+  <div class="table-container">
+    <table class="table is-fullwidth">
+      <thead>
+        <tr>
+          <th style="width: 40%;">Species</th>
+          <th style="width: 30%;">Number of Sightings</th>
+          <th style="width: 30%;">Add Sightings Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template v-if="search_active">
+          <tr v-for="(species, index) in search" :key="index" class="species-row">
+            <td>{{ species.common_name }}</td>
+            <td>{{ species.total_sightings }}</td>
+            <td>
+              <!-- Search Bar -->
+              <div class="field has-addons">
+                <p class="control">
+                  <input type="number" class="input" v-model.number="species.new_sightings" @keyup.enter="handleKeyUp($event, species)">
+                </p>
+                <!-- Increment Button -->
+                <p class="control">
+                  <button class="button is-success" @click="incrementSightings(species)">
+                    +1
+                  </button>
+                </p>
+              </div>
+            </td>
+          </tr>
+        </template>
+        <template v-else>
+          <tr v-for="(species, index) in checklist_data" :key="index" class="species-row">
+            <td>{{ species.common_name }}</td>
+            <td>{{ species.total_sightings }}</td>
+            <td>
+              <div class="field has-addons">
+                <p class="control">
+                  <input type="number" class="input" v-model.number="species.new_sightings" @keyup.enter="handleKeyUp($event, species)">
+                </p>
+                <p class="control">
+                  <button class="button is-success" @click="incrementSightings(species)">
+                    +1
+                  </button>
+                </p>
+              </div>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 [[block page_scripts]]

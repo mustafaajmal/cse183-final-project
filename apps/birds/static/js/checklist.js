@@ -23,9 +23,6 @@ app.data = {
             }
             localStorage.setItem('bird_search', this.bird_search);
         },
-        redirectToMyChecklist() {
-            window.location.href = my_checklist_url;
-        },
         updateSightings(species, new_sightings) {
             axios.post(update_sightings_url, {
                 common_name: species.common_name,

@@ -4,6 +4,10 @@
   [v-cloak] {
     display: none;
   }
+
+  .table-container {
+    overflow-x: auto;
+  }
 </style>
 
 <div class="section" id="app" v-cloak>
@@ -17,31 +21,36 @@
     </div>
   </div>
 
-  <table class="table is-fullwidth">
-    <thead>
-      <tr>
-        <th>Species Name</th>
-        <th>Latitude</th>
-        <th>Longitude</th>
-        <th>Date Observed</th>
-        <th>Duration Observed</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(checklist, index) in checklists" :key="checklist.id">
-        <td>{{ checklist.SAMPLING_EVENT_IDENTIFIER }}</td>
-        <td>{{ checklist.LATITUDE }}</td>
-        <td>{{ checklist.LONGITUDE }}</td>
-        <td>{{ checklist.OBSERVATION_DATE }}</td>
-        <td>{{ checklist.DURATION_MINUTES }}</td>
-        <td>
-          <button @click="editChecklist(checklist.id)" class="button is-warning is-small">Edit</button>
-          <button @click="deleteChecklist(checklist.id)" class="button is-danger is-small">Delete</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <!-- Table Container -->
+  <div class="table-container">
+    <table class="table is-fullwidth">
+      <thead>
+        <tr>
+          <th>Species Name</th>
+          <th>Latitude</th>
+          <th>Longitude</th>
+          <th>Date Observed</th>
+          <th>Duration Observed</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(checklist, index) in checklists" :key="checklist.id">
+          <td>{{ checklist.SAMPLING_EVENT_IDENTIFIER }}</td>
+          <td>{{ checklist.LATITUDE }}</td>
+          <td>{{ checklist.LONGITUDE }}</td>
+          <td>{{ checklist.OBSERVATION_DATE }}</td>
+          <td>{{ checklist.DURATION_MINUTES }}</td>
+          <td>
+            <!-- Edit and Delete Buttons -->
+            <div class="buttons">
+              <button @click="deleteChecklist(checklist.id)" class="button is-danger is-small">Delete</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 [[block page_scripts]]
