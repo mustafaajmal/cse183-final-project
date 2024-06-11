@@ -76,7 +76,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 // If it does not exist, set the initial count
                                 this.topContributors[observer_id] = count;
                             }
+                            this.totalSightings += count;
                         }
+                        
 
                         let sortedContributors = Object.entries(this.topContributors).sort((a, b) => b[1] - a[1]);
                         this.topContributors = Object.fromEntries(sortedContributors);
@@ -158,6 +160,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             contributorsList: function() {
                 return this.topContributors;
+            },
+
+            totalSightingsUpdate: function() {
+                return this.totalSightings;
             }
         },
 
