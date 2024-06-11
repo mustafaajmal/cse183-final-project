@@ -2,9 +2,9 @@
 
 // This will be the object that will contain the Vue attributes
 // and be used to initialize it.
-let app = {};
+let statsApp = {};
 
-app.data = {
+statsApp.data = {
     data: function() {
         return {
             my_value: 1, 
@@ -84,13 +84,13 @@ app.data = {
     },
 };
 
-app.vue = Vue.createApp(app.data).mount("#app");
+statsApp.vue = Vue.createApp(statsApp.data).mount("#statistics-app");
 
-app.load_data = function() {
+statsApp.load_data = function() {
     axios.get(load_user_statistics_url).then(function(r) {
         console.log(r.status);
-        app.vue.common_names = r.data.common_names;
+        statsApp.vue.common_names = r.data.common_names;
     });
 };
 
-app.load_data();
+statsApp.load_data();

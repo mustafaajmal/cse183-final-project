@@ -131,7 +131,7 @@ def get_bird_sightings():
                 'date': event_location.OBSERVATION_DATE,
                 'intensity': intensity
             })
-
+    print("Makes it here", len(sightings_list))
     return dict(sightings=sightings_list)
 
 @action('save_coords', method='POST')
@@ -272,6 +272,7 @@ def location():
     drawn_coordinates = session.get('drawn_coordinates', [])
     return dict(
         my_callback_url = URL('my_callback', signer=url_signer),
+        get_bird_sightings_url = URL('get_bird_sightings'),
         drawn_coordinates = json.dumps(drawn_coordinates),
     )
 

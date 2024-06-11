@@ -47,7 +47,7 @@
   crossorigin=""/>
 </head>
 
-<div class="section" id="app" v-cloak>
+<div class="section" id="statistics-app" v-cloak>
   <h1 class="title"><i class="fa-solid fa-cube"></i> User Statistics Page</h1>
   <p>The user statistics pages allows the user to search birds and either search by recent or first sightings. Clicking on the species will direct you to dates found. Clicking on those dates will direct the map to the location of where it was found recently. </p>
   <div class="field is-grouped">
@@ -68,7 +68,9 @@
       <button class="button is-primary" @click="search">Search</button>
     </div>
   </div>
-  <div id="map" style="height: 300px"></div>
+  <div>
+    <div id="map" style="height: 300px"></div>
+  </div>
   <div class="columns is-multiline">
     <div class="column is-one-third" v-for="(name, index) in common_names" :key="name.COMMON_NAME">
       <ul>
